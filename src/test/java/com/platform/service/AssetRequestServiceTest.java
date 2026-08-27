@@ -12,13 +12,17 @@ class AssetRequestServiceTest {
 
     private AssetRequestService service;
     private AssetRequestRepository repository;
+    private com.platform.repository.ReviewActionRepository reviewActionRepository;
+    private com.platform.repository.AuditLogRepository auditLogRepository;
     private NotificationService notificationService;
 
     @BeforeEach
     void setUp() {
         repository = new AssetRequestRepository();
+        reviewActionRepository = new com.platform.repository.ReviewActionRepository();
+        auditLogRepository = new com.platform.repository.AuditLogRepository();
         notificationService = new NotificationService();
-        service = new AssetRequestService(repository, notificationService);
+        service = new AssetRequestService(repository, reviewActionRepository, auditLogRepository, notificationService);
     }
 
     @Test
@@ -52,5 +56,17 @@ class AssetRequestServiceTest {
         assertThrows(IllegalArgumentException.class, () -> {
             service.submitRequest("", "Summer Ad", "ad.jpg", 1024, "user1");
         });
+    }
+
+    @Test
+    void reviewRequest_ValidAction_UpdatesStatusAndLogs() {
+        AssetRequest req = service.submitRequest("Ad Campaign", "Summer Ad", "ad.jpg", 1024, "user1");
+        
+        AssetRequest updated = service.reviewRequest(req.getId(), "reviewer1", RequestStatus.APPROVED, "Looks good");
+        
+        assertEquals(RequestStatus.APPROVED, updated.getStatus());
+        assertEquals(1, reviewActionRepository.findByRequestId(req.getId()).size());
+        assertEquals(RequestStatus.APPROVED, reviewActionRepository.findByRequestId(req.getId()).get(0).getAction());
+        assertEquals(1, auditLogRepository.findByRequestId(req.getId()).size());
     }
 }
