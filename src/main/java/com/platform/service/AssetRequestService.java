@@ -20,6 +20,7 @@ public class AssetRequestService {
     private final AssetRequestRepository repository;
     private final ReviewActionRepository reviewActionRepository;
     private final AuditLogRepository auditLogRepository;
+    private final NotificationService notificationService;
     
     // Limits hard-coded for MVP per review comments
     private static final long MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -27,15 +28,20 @@ public class AssetRequestService {
 
     public AssetRequestService(AssetRequestRepository repository,
                                ReviewActionRepository reviewActionRepository,
-                               AuditLogRepository auditLogRepository) {
+                               AuditLogRepository auditLogRepository,
+                               NotificationService notificationService) {
         this.repository = repository;
         this.reviewActionRepository = reviewActionRepository;
         this.auditLogRepository = auditLogRepository;
+        this.notificationService = notificationService;
     }
 
     public AssetRequest submitRequest(String title, String description, String fileName, long fileSize, String requesterId) {
         if (title == null || title.trim().isEmpty()) {
             throw new IllegalArgumentException("Title is required");
+        }
+        if (title.length() > 100) {
+            throw new IllegalArgumentException("Title length must be under 100 characters");
         }
         
         if (fileSize > MAX_FILE_SIZE) {
@@ -57,7 +63,9 @@ public class AssetRequestService {
                 LocalDateTime.now()
         );
 
-        return repository.save(request);
+        AssetRequest savedRequest = repository.save(request);
+        notificationService.notifyStatusChange(savedRequest.getId(), savedRequest.getStatus().name());
+        return savedRequest;
     }
     
     public AssetRequest reviewRequest(String requestId, String reviewerId, RequestStatus action, String comment) {
@@ -86,6 +94,8 @@ public class AssetRequestService {
                 LocalDateTime.now()
         );
         auditLogRepository.save(log);
+        
+        notificationService.notifyStatusChange(requestId, action.name());
         
         return repository.save(request);
     }

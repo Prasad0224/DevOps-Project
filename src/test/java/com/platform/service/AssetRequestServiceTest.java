@@ -14,13 +14,15 @@ class AssetRequestServiceTest {
     private AssetRequestRepository repository;
     private com.platform.repository.ReviewActionRepository reviewActionRepository;
     private com.platform.repository.AuditLogRepository auditLogRepository;
+    private NotificationService notificationService;
 
     @BeforeEach
     void setUp() {
         repository = new AssetRequestRepository();
         reviewActionRepository = new com.platform.repository.ReviewActionRepository();
         auditLogRepository = new com.platform.repository.AuditLogRepository();
-        service = new AssetRequestService(repository, reviewActionRepository, auditLogRepository);
+        notificationService = new NotificationService();
+        service = new AssetRequestService(repository, reviewActionRepository, auditLogRepository, notificationService);
     }
 
     @Test
