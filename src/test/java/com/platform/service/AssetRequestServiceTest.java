@@ -12,11 +12,13 @@ class AssetRequestServiceTest {
 
     private AssetRequestService service;
     private AssetRequestRepository repository;
+    private NotificationService notificationService;
 
     @BeforeEach
     void setUp() {
         repository = new AssetRequestRepository();
-        service = new AssetRequestService(repository);
+        notificationService = new NotificationService();
+        service = new AssetRequestService(repository, notificationService);
     }
 
     @Test
