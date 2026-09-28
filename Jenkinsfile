@@ -102,11 +102,14 @@ pipeline {
                             cp -f ${WAR_FILE} "${TOMCAT_DEPLOY_DIR}/${params.DEPLOY_ENV}/"
                         """
                     } else {
+                        def winWar = WAR_FILE.replace('/', '\\')
+                        def winDeployDir = "${TOMCAT_DEPLOY_DIR}".replace('/', '\\')
+                        def winWebapps = "${webappsDir}".replace('/', '\\')
                         bat """
-                            if not exist "${webappsDir}" mkdir "${webappsDir}"
-                            if not exist "${TOMCAT_DEPLOY_DIR}\\${params.DEPLOY_ENV}" mkdir "${TOMCAT_DEPLOY_DIR}\\${params.DEPLOY_ENV}"
-                            copy /Y "${WAR_FILE}" "${webappsDir}\\${params.TOMCAT_CONTEXT_PATH}.war"
-                            copy /Y "${WAR_FILE}" "${TOMCAT_DEPLOY_DIR}\\${params.DEPLOY_ENV}\\"
+                            if not exist "${winWebapps}" mkdir "${winWebapps}"
+                            if not exist "${winDeployDir}\\${params.DEPLOY_ENV}" mkdir "${winDeployDir}\\${params.DEPLOY_ENV}"
+                            copy /Y "${winWar}" "${winWebapps}\\${params.TOMCAT_CONTEXT_PATH}.war"
+                            copy /Y "${winWar}" "${winDeployDir}\\${params.DEPLOY_ENV}\\"
                         """
                     }
                     echo "WAR deployed to Tomcat webapps directory as ${params.TOMCAT_CONTEXT_PATH}.war."
@@ -161,9 +164,11 @@ pipeline {
                             cp -f ${WAR_FILE} "${prodDir}/"
                         """
                     } else {
+                        def winWar = WAR_FILE.replace('/', '\\')
+                        def winProdDir = "${prodDir}".replace('/', '\\')
                         bat """
-                            if not exist "${prodDir}" mkdir "${prodDir}"
-                            copy /Y "${WAR_FILE}" "${prodDir}\\"
+                            if not exist "${winProdDir}" mkdir "${winProdDir}"
+                            copy /Y "${winWar}" "${winProdDir}\\"
                         """
                     }
                     echo "Promoted ${WAR_FILE} to ${prodDir} as verified production release."
