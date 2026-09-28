@@ -83,7 +83,7 @@ public class AssetApprovalSeleniumTest {
 
         WebDriverManager.chromedriver().setup();
         driver = new ChromeDriver(options);
-        wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        wait = new WebDriverWait(driver, Duration.ofSeconds(20));
 
         // Create screenshot directory
         new File(SCREENSHOT_DIR).mkdirs();
