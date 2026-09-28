@@ -110,7 +110,7 @@ pipeline {
                             if not exist "${winDeployDir}\\${params.DEPLOY_ENV}" mkdir "${winDeployDir}\\${params.DEPLOY_ENV}"
                             copy /Y "${winWar}" "${winWebapps}\\${params.TOMCAT_CONTEXT_PATH}.war"
                             copy /Y "${winWar}" "${winDeployDir}\\${params.DEPLOY_ENV}\\"
-                            powershell -Command "Start-Sleep -Seconds 5; for (\$i=0; \$i -lt 30; \$i++) { try { \$r = Invoke-WebRequest -Uri 'http://${params.TOMCAT_HOST}:${params.TOMCAT_PORT}/${params.TOMCAT_CONTEXT_PATH}/api/health' -UseBasicParsing -TimeoutSec 3; if (\$r.StatusCode -eq 200) { Write-Host 'Tomcat context is healthy and ready.'; exit 0 } } catch {}; Start-Sleep -Seconds 2 }; Write-Host 'Proceeding...'; exit 0"
+                            powershell -Command "Start-Sleep -Seconds 15; for (\$i=0; \$i -lt 30; \$i++) { try { \$r = Invoke-WebRequest -Uri 'http://${params.TOMCAT_HOST}:${params.TOMCAT_PORT}/${params.TOMCAT_CONTEXT_PATH}/api/health' -UseBasicParsing -TimeoutSec 3; if (\$r.StatusCode -eq 200 -and \$r.Content -like '*running*') { Write-Host 'Tomcat context is healthy and ready.'; exit 0 } } catch {}; Start-Sleep -Seconds 2 }; Write-Host 'Proceeding...'; exit 0"
                         """
                     }
                     echo "WAR deployed to Tomcat webapps directory as ${params.TOMCAT_CONTEXT_PATH}.war."

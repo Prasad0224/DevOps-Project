@@ -98,8 +98,21 @@ public class AssetApprovalSeleniumTest {
 
     @BeforeEach
     void loadApp() {
-        driver.get(baseUrl);
-        wait.until(ExpectedConditions.presenceOfElementLocated(By.id("title")));
+        for (int i = 0; i < 5; i++) {
+            try {
+                driver.get(baseUrl);
+                wait.until(ExpectedConditions.presenceOfElementLocated(By.id("title")));
+                return;
+            } catch (Exception e) {
+                if (i == 4) {
+                    throw e;
+                }
+                try {
+                    Thread.sleep(3000);
+                } catch (InterruptedException ignored) {
+                }
+            }
+        }
     }
 
     @Test
