@@ -4,7 +4,7 @@ pipeline {
     parameters {
         choice(name: 'DEPLOY_ENV', choices: ['test', 'staging', 'production'], description: 'Target deployment environment')
         string(name: 'TOMCAT_HOST', defaultValue: 'localhost', description: 'Apache Tomcat server hostname/IP')
-        string(name: 'TOMCAT_PORT', defaultValue: '8080', description: 'Apache Tomcat HTTP port')
+        string(name: 'TOMCAT_PORT', defaultValue: '8081', description: 'Apache Tomcat HTTP port')
         string(name: 'TOMCAT_CONTEXT_PATH', defaultValue: 'digital-asset-approval-platform', description: 'WAR deployment context path on Tomcat')
         string(name: 'TOMCAT_WEBAPPS_DIR', defaultValue: '', description: 'Explicit path to Tomcat webapps directory (defaults to CATALINA_HOME/webapps)')
         booleanParam(name: 'RUN_SELENIUM_E2E', defaultValue: true, description: 'Run automated Selenium E2E suite against Tomcat')
@@ -127,7 +127,7 @@ pipeline {
                     if (isUnix()) {
                         sh "mvn test -Pselenium -Dapp.baseUrl=${tomcatBaseUrl} -Dselenium.headless=true"
                     } else {
-                        bat "mvn test -Pselenium -Dapp.baseUrl=${tomcatBaseUrl} -Dselenium.headless=true"
+                        bat "mvn test -Pselenium \"-Dapp.baseUrl=${tomcatBaseUrl}\" \"-Dselenium.headless=true\""
                     }
                 }
             }
@@ -151,21 +151,22 @@ pipeline {
                 }
             }
             steps {
-                echo '=== Stage 8: Production Deployment Gate Passed ==='
+                echo '=== Stage 8: Production Promotion Gate Passed ==='
                 script {
-                    echo "Deploying verified WAR artifact to Production Tomcat cluster..."
+                    echo "Selenium E2E verification passed. Promoting verified WAR artifact to production release location..."
+                    def prodDir = "${TOMCAT_DEPLOY_DIR}/production"
                     if (isUnix()) {
                         sh """
-                            mkdir -p "${TOMCAT_DEPLOY_DIR}/production"
-                            cp -f ${WAR_FILE} "${TOMCAT_DEPLOY_DIR}/production/"
+                            mkdir -p "${prodDir}"
+                            cp -f ${WAR_FILE} "${prodDir}/"
                         """
                     } else {
                         bat """
-                            if not exist "${TOMCAT_DEPLOY_DIR}\\production" mkdir "${TOMCAT_DEPLOY_DIR}\\production"
-                            copy /Y "${WAR_FILE}" "${TOMCAT_DEPLOY_DIR}\\production\\"
+                            if not exist "${prodDir}" mkdir "${prodDir}"
+                            copy /Y "${WAR_FILE}" "${prodDir}\\"
                         """
                     }
-                    echo "Production deployment successful."
+                    echo "Promoted ${WAR_FILE} to ${prodDir} as verified production release."
                 }
             }
         }
