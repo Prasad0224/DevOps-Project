@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Asset Approval Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: #1e293b;
+            --border-color: #334155;
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-blue: #3b82f6;
+            --accent-blue-hover: #2563eb;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --radius: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 24px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 24px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 28px;
+        }
+
+        .logo-area h1 {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge-system {
+            font-size: 12px;
+            background: rgba(59, 130, 246, 0.15);
+            color: #60a5fa;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            padding: 4px 8px;
+            border-radius: 9999px;
+            font-weight: 500;
+        }
+
+        .health-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .health-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: var(--success);
+            box-shadow: 0 0 8px var(--success);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 380px 1fr;
+            gap: 28px;
+        }
+
+        @media (max-width: 900px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 24px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        label {
+            display: block;
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 10px 12px;
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            color: var(--text-primary);
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input:focus,
+        textarea:focus,
+        select:focus {
+            border-color: var(--accent-blue);
+        }
+
+        .hint {
+            font-size: 11px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        button {
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            padding: 10px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: var(--accent-blue);
+            color: #ffffff;
+            width: 100%;
+        }
+
+        .btn-primary:hover {
+            background: var(--accent-blue-hover);
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .btn-approve {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--success);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+        }
+
+        .btn-approve:hover {
+            background: var(--success);
+            color: #fff;
+        }
+
+        .btn-reject {
+            background: rgba(239, 68, 68, 0.15);
+            color: var(--danger);
+            border: 1px solid rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-reject:hover {
+            background: var(--danger);
+            color: #fff;
+        }
+
+        .btn-change {
+            background: rgba(245, 158, 11, 0.15);
+            color: var(--warning);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+        }
+
+        .btn-change:hover {
+            background: var(--warning);
+            color: #000;
+        }
+
+        .feedback-message {
+            margin-top: 14px;
+            padding: 10px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            display: none;
+        }
+
+        .feedback-error {
+            display: block;
+            background: rgba(239, 68, 68, 0.15);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .feedback-success {
+            display: block;
+            background: rgba(16, 185, 129, 0.15);
+            color: #86efac;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .table-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        th {
+            text-align: left;
+            padding: 12px 10px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border-color);
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 12px 10px;
+            border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+            vertical-align: middle;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .status-PENDING {
+            background: rgba(59, 130, 246, 0.15);
+            color: #93c5fd;
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+
+        .status-APPROVED {
+            background: rgba(16, 185, 129, 0.15);
+            color: #86efac;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+        }
+
+        .status-REJECTED {
+            background: rgba(239, 68, 68, 0.15);
+            color: #fca5a5;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .status-CHANGES_REQUESTED {
+            background: rgba(245, 158, 11, 0.15);
+            color: #fcd34d;
+            border: 1px solid rgba(245, 158, 11, 0.3);
+        }
+
+        .action-group {
+            display: flex;
+            gap: 6px;
+        }
+
+        /* Modal Dialog */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.7);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 24px;
+            max-width: 480px;
+            width: 90%;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-area">
+                <h1>Digital Asset Approval Portal <span class="badge-system">v1.0.0</span></h1>
+            </div>
+            <div class="health-indicator">
+                <div class="health-dot" id="health-dot"></div>
+                <span id="health-status">System Online</span>
+            </div>
+        </header>
+
+        <div class="grid">
+            <!-- Asset Submission Form -->
+            <div class="card">
+                <h2 class="card-title">Submit Asset for Approval</h2>
+                <form id="asset-form" onsubmit="handleAssetSubmit(event)">
+                    <div class="form-group">
+                        <label for="title">Asset Title *</label>
+                        <input type="text" id="title" name="title" placeholder="e.g. Q3 Brand Campaign Banner" required maxlength="100">
+                        <div class="hint">Max 100 characters.</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">Description</label>
+                        <textarea id="description" name="description" rows="3" placeholder="Provide background or specifications..."></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="fileName">File Name *</label>
+                        <input type="text" id="fileName" name="fileName" placeholder="e.g. hero-graphic.png" required>
+                        <div class="hint">Allowed types: jpg, png, pdf, docx</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="fileSize">File Size (bytes) *</label>
+                        <input type="number" id="fileSize" name="fileSize" value="1048576" required min="1">
+                        <div class="hint">Maximum 10 MB (10,485,760 bytes)</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="requesterId">Requester ID *</label>
+                        <input type="text" id="requesterId" name="requesterId" value="marketing-team-1" required>
+                    </div>
+
+                    <button type="submit" class="btn-primary" id="submit-btn">Submit Asset</button>
+
+                    <div id="form-feedback" class="feedback-message"></div>
+                </form>
+            </div>
+
+            <!-- Approval Queue & Reviewer Dashboard -->
+            <div class="card">
+                <div class="table-controls">
+                    <h2 class="card-title" style="margin-bottom:0;">Approval Queue</h2>
+                    <button class="btn-sm" style="background:var(--border-color); color:#fff;" id="refresh-btn" onclick="fetchRequests()">Refresh Queue</button>
+                </div>
+
+                <div style="overflow-x: auto;">
+                    <table id="requests-table">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>File</th>
+                                <th>Requester</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="requests-tbody">
+                            <!-- Injected dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Review Modal Dialog -->
+    <div id="review-modal" class="modal-overlay">
+        <div class="modal-content">
+            <h3 class="card-title" id="modal-title">Review Asset</h3>
+            <input type="hidden" id="modal-request-id">
+            <input type="hidden" id="modal-action">
+            
+            <div class="form-group">
+                <label for="reviewerId">Reviewer ID *</label>
+                <input type="text" id="reviewerId" value="lead-reviewer-1">
+            </div>
+
+            <div class="form-group">
+                <label for="reviewComment">Review Comment *</label>
+                <textarea id="reviewComment" rows="3" placeholder="Provide feedback or rationale..."></textarea>
+            </div>
+
+            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                <button type="button" class="btn-sm" style="background: var(--border-color); color: #fff;" onclick="closeModal()">Cancel</button>
+                <button type="button" class="btn-sm btn-primary" id="confirm-review-btn" onclick="submitReviewAction()">Confirm Decision</button>
+            </div>
+            <div id="modal-feedback" class="feedback-message"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.pathname.replace(/\/+$/, '') + '/api';
+
+        async function checkHealth() {
+            try {
+                const res = await fetch(`${API_BASE}/health`);
+                if (res.ok) {
+                    const text = await res.text();
+                    document.getElementById('health-status').textContent = text;
+                    document.getElementById('health-dot').style.background = 'var(--success)';
+                } else {
+                    document.getElementById('health-status').textContent = 'Degraded';
+                    document.getElementById('health-dot').style.background = 'var(--danger)';
+                }
+            } catch (err) {
+                document.getElementById('health-status').textContent = 'Offline';
+                document.getElementById('health-dot').style.background = 'var(--danger)';
+            }
+        }
+
+        async function fetchRequests() {
+            try {
+                const res = await fetch(`${API_BASE}/requests`);
+                if (res.ok) {
+                    const data = await res.json();
+                    renderRequests(data);
+                }
+            } catch (err) {
+                console.error("Failed to load requests", err);
+            }
+        }
+
+        function renderRequests(requests) {
+            const tbody = document.getElementById('requests-tbody');
+            tbody.innerHTML = '';
+            
+            if (requests.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-secondary); padding:24px;">No requests in queue. Submit an asset to get started.</td></tr>`;
+                return;
+            }
+
+            requests.forEach(req => {
+                const tr = document.createElement('tr');
+                tr.setAttribute('data-request-id', req.id);
+                tr.innerHTML = `
+                    <td>
+                        <strong class="req-title">${escapeHtml(req.title)}</strong><br>
+                        <small style="color:var(--text-secondary);">${escapeHtml(req.description || '')}</small>
+                    </td>
+                    <td><code>${escapeHtml(req.fileUrl || '')}</code></td>
+                    <td>${escapeHtml(req.requesterId)}</td>
+                    <td><span class="status-badge status-${req.status}" id="status-${req.id}">${req.status}</span></td>
+                    <td>
+                        <div class="action-group">
+                            <button class="btn-sm btn-approve" onclick="openReviewModal('${req.id}', 'APPROVED')">Approve</button>
+                            <button class="btn-sm btn-reject" onclick="openReviewModal('${req.id}', 'REJECTED')">Reject</button>
+                            <button class="btn-sm btn-change" onclick="openReviewModal('${req.id}', 'CHANGES_REQUESTED')">Revise</button>
+                        </div>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function handleAssetSubmit(e) {
+            e.preventDefault();
+            const feedback = document.getElementById('form-feedback');
+            feedback.className = 'feedback-message';
+            feedback.style.display = 'none';
+
+            const title = document.getElementById('title').value;
+            const description = document.getElementById('description').value;
+            const fileName = document.getElementById('fileName').value;
+            const fileSize = document.getElementById('fileSize').value;
+            const requesterId = document.getElementById('requesterId').value;
+
+            const params = new URLSearchParams();
+            params.append('title', title);
+            params.append('description', description);
+            params.append('fileName', fileName);
+            params.append('fileSize', fileSize);
+            params.append('requesterId', requesterId);
+
+            try {
+                const res = await fetch(`${API_BASE}/requests?${params.toString()}`, {
+                    method: 'POST'
+                });
+
+                if (res.ok) {
+                    const result = await res.json();
+                    feedback.className = 'feedback-message feedback-success';
+                    feedback.textContent = `Asset "${result.title}" submitted successfully! ID: ${result.id}`;
+                    feedback.style.display = 'block';
+                    document.getElementById('title').value = '';
+                    document.getElementById('description').value = '';
+                    fetchRequests();
+                } else {
+                    const errText = await res.text();
+                    feedback.className = 'feedback-message feedback-error';
+                    feedback.textContent = `Error: ${errText}`;
+                    feedback.style.display = 'block';
+                }
+            } catch (err) {
+                feedback.className = 'feedback-message feedback-error';
+                feedback.textContent = `Network error: ${err.message}`;
+                feedback.style.display = 'block';
+            }
+        }
+
+        function openReviewModal(requestId, action) {
+            document.getElementById('modal-request-id').value = requestId;
+            document.getElementById('modal-action').value = action;
+            document.getElementById('modal-title').textContent = `Action: ${action.replace('_', ' ')}`;
+            document.getElementById('reviewComment').value = '';
+            document.getElementById('modal-feedback').style.display = 'none';
+            document.getElementById('review-modal').style.display = 'flex';
+        }
+
+        function closeModal() {
+            document.getElementById('review-modal').style.display = 'none';
+        }
+
+        async function submitReviewAction() {
+            const requestId = document.getElementById('modal-request-id').value;
+            const action = document.getElementById('modal-action').value;
+            const reviewerId = document.getElementById('reviewerId').value;
+            const comment = document.getElementById('reviewComment').value || 'Decision executed';
+            const feedback = document.getElementById('modal-feedback');
+
+            const params = new URLSearchParams();
+            params.append('reviewerId', reviewerId);
+            params.append('action', action);
+            params.append('comment', comment);
+
+            try {
+                const res = await fetch(`${API_BASE}/requests/${requestId}/review?${params.toString()}`, {
+                    method: 'PUT'
+                });
+
+                if (res.ok) {
+                    closeModal();
+                    fetchRequests();
+                } else {
+                    const err = await res.text();
+                    feedback.className = 'feedback-message feedback-error';
+                    feedback.textContent = err;
+                    feedback.style.display = 'block';
+                }
+            } catch (err) {
+                feedback.className = 'feedback-message feedback-error';
+                feedback.textContent = err.message;
+                feedback.style.display = 'block';
+            }
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/[&<>'"]/g, 
+                tag => ({
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    "'": '&#39;',
+                    '"': '&quot;'
+                }[tag] || tag)
+            );
+        }
+
+        // Initialize on load
+        window.addEventListener('DOMContentLoaded', () => {
+            checkHealth();
+            fetchRequests();
+        });
+    </script>
+</body>
+</html>

@@ -69,4 +69,27 @@ class AssetRequestServiceTest {
         assertEquals(RequestStatus.APPROVED, reviewActionRepository.findByRequestId(req.getId()).get(0).getAction());
         assertEquals(1, auditLogRepository.findByRequestId(req.getId()).size());
     }
+
+    @Test
+    void reviewRequest_RejectAction_UpdatesStatusAndLogs() {
+        AssetRequest req = service.submitRequest("Brand Logo", "New Logo", "logo.png", 2048, "designer");
+        AssetRequest rejected = service.reviewRequest(req.getId(), "reviewer2", RequestStatus.REJECTED, "Does not meet branding guidelines");
+        
+        assertEquals(RequestStatus.REJECTED, rejected.getStatus());
+        assertEquals(1, reviewActionRepository.findByRequestId(req.getId()).size());
+        assertEquals(RequestStatus.REJECTED, reviewActionRepository.findByRequestId(req.getId()).get(0).getAction());
+        assertEquals("Does not meet branding guidelines", reviewActionRepository.findByRequestId(req.getId()).get(0).getComment());
+        assertEquals(1, auditLogRepository.findByRequestId(req.getId()).size());
+        assertTrue(auditLogRepository.findByRequestId(req.getId()).get(0).getEvent().contains("REJECTED"));
+    }
+
+    @Test
+    void reviewRequest_RequestChangesAction_UpdatesStatusAndLogs() {
+        AssetRequest req = service.submitRequest("Whitepaper", "Draft v1", "paper.pdf", 4096, "author");
+        AssetRequest changed = service.reviewRequest(req.getId(), "reviewer3", RequestStatus.CHANGES_REQUESTED, "Please revise section 3");
+        
+        assertEquals(RequestStatus.CHANGES_REQUESTED, changed.getStatus());
+        assertEquals(RequestStatus.CHANGES_REQUESTED, reviewActionRepository.findByRequestId(req.getId()).get(0).getAction());
+        assertEquals("Please revise section 3", reviewActionRepository.findByRequestId(req.getId()).get(0).getComment());
+    }
 }
