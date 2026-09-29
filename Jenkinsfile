@@ -15,6 +15,12 @@ pipeline {
         WAR_FILE = "target/${APP_NAME}.war"
         TOMCAT_DEPLOY_DIR = "${WORKSPACE}/deployments"
         SELENIUM_SCREENSHOTS = 'target/selenium-screenshots'
+        DOCKER_REGISTRY = 'localhost:5000'
+        IMAGE_NAME = 'digital-asset-approval-platform'
+        IMAGE_TAG = "1.0.${BUILD_NUMBER}"
+        DOCKER_CONTAINER = 'digital-asset-approval-platform'
+        DOCKER_HOST_PORT = '8082'
+        DOCKER_CONTAINER_PORT = '8080'
     }
 
     options {
@@ -142,12 +148,102 @@ pipeline {
                     archiveArtifacts artifacts: 'target/selenium-screenshots/**', allowEmptyArchive: true
                 }
                 failure {
-                    echo 'CRITICAL: Selenium E2E tests failed on Tomcat! Aborting pipeline to block Production release.'
+                    echo 'CRITICAL: Selenium E2E tests failed on Tomcat! Aborting pipeline to block Production release and Docker deployment.'
                 }
             }
         }
 
-        stage('Production Deployment') {
+        stage('Docker Build') {
+            steps {
+                echo "=== Stage 8: Docker Image Build (${IMAGE_NAME}:${IMAGE_TAG}) ==="
+                script {
+                    if (isUnix()) {
+                        sh "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
+                    } else {
+                        bat "docker build -t ${IMAGE_NAME}:${IMAGE_TAG} ."
+                    }
+                }
+            }
+        }
+
+        stage('Docker Tag') {
+            steps {
+                echo "=== Stage 9: Docker Image Tagging ==="
+                script {
+                    if (isUnix()) {
+                        sh """
+                            docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+                            docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
+                            docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest
+                        """
+                    } else {
+                        bat """
+                            docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+                            docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
+                            docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Docker Push') {
+            steps {
+                echo "=== Stage 10: Docker Push to Local Registry (${DOCKER_REGISTRY}) ==="
+                script {
+                    if (isUnix()) {
+                        sh """
+                            docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+                            docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest
+                        """
+                    } else {
+                        bat """
+                            docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+                            docker push ${DOCKER_REGISTRY}/${IMAGE_NAME}:latest
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Docker Deploy') {
+            steps {
+                echo "=== Stage 11: Deploy Fresh Docker Container (${DOCKER_CONTAINER}) ==="
+                script {
+                    if (isUnix()) {
+                        sh """
+                            docker stop ${DOCKER_CONTAINER} || true
+                            docker rm ${DOCKER_CONTAINER} || true
+                            docker pull ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+                            docker run -d --name ${DOCKER_CONTAINER} -p ${DOCKER_HOST_PORT}:${DOCKER_CONTAINER_PORT} ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+                        """
+                        sh """
+                            sleep 5
+                            for i in \$(seq 1 30); do
+                                if curl -s -f http://localhost:${DOCKER_HOST_PORT}/api/health | grep -q 'running'; then
+                                    echo "Fresh Docker container is healthy and responding."
+                                    break
+                                fi
+                                sleep 2
+                            done
+                            docker ps -f name=${DOCKER_CONTAINER}
+                            docker logs --tail 30 ${DOCKER_CONTAINER}
+                        """
+                    } else {
+                        bat """
+                            powershell -Command "try { docker stop ${DOCKER_CONTAINER} 2>&1 | Out-Null } catch {}; try { docker rm ${DOCKER_CONTAINER} 2>&1 | Out-Null } catch {}"
+                            docker pull ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+                            docker run -d --name ${DOCKER_CONTAINER} -p ${DOCKER_HOST_PORT}:${DOCKER_CONTAINER_PORT} ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+                            powershell -Command "Start-Sleep -Seconds 5; for (\$i=0; \$i -lt 30; \$i++) { try { \$r = Invoke-WebRequest -Uri 'http://localhost:${DOCKER_HOST_PORT}/api/health' -UseBasicParsing -TimeoutSec 3; if (\$r.StatusCode -eq 200 -and \$r.Content -like '*running*') { Write-Host 'Fresh Docker container is healthy and responding.'; exit 0 } } catch {}; Start-Sleep -Seconds 2 }; Write-Error 'Docker container health check failed on port ${DOCKER_HOST_PORT}'; exit 1"
+                            docker ps --filter "name=${DOCKER_CONTAINER}"
+                            docker logs --tail 30 ${DOCKER_CONTAINER}
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Production Promotion') {
             when {
                 allOf {
                     expression { currentBuild.result == null || currentBuild.result == 'SUCCESS' }
@@ -155,9 +251,9 @@ pipeline {
                 }
             }
             steps {
-                echo '=== Stage 8: Production Promotion Gate Passed ==='
+                echo '=== Stage 12: Production Promotion Gate Passed ==='
                 script {
-                    echo "Selenium E2E verification passed. Promoting verified WAR artifact to production release location..."
+                    echo "Quality gates passed. Promoting verified WAR artifact to production release location..."
                     def prodDir = "${TOMCAT_DEPLOY_DIR}/production"
                     if (isUnix()) {
                         sh """
@@ -180,10 +276,10 @@ pipeline {
 
     post {
         success {
-            echo "Pipeline SUCCESS: Build, Tests, Packaging, Tomcat Deployment, and Selenium Verification completed."
+            echo "Pipeline SUCCESS: Build, Tests, Packaging, Tomcat Deployment, Selenium Verification, Docker CI/CD, and Production Promotion completed."
         }
         failure {
-            echo "Pipeline FAILURE: Build stopped on error. Inspect surefire reports and selenium-screenshots."
+            echo "Pipeline FAILURE: Build stopped on error. Inspect surefire reports, selenium-screenshots, or docker logs."
         }
     }
 }

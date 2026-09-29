@@ -1,0 +1,15 @@
+.git
+.gitignore
+.idea
+target/selenium-screenshots
+target/surefire-reports
+target/classes
+target/test-classes
+target/generated-sources
+target/generated-test-sources
+target/maven-status
+target/maven-archiver
+target/digital-asset-approval-platform
+docs/screenshots
+*.md
+Jenkinsfile
