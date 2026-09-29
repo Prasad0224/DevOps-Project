@@ -1,0 +1,38 @@
+﻿
+PLAY [Rollback Application to Previous Stable Release] *************************
+
+TASK [Gathering Facts] *********************************************************
+ok: [daap-target]
+
+TASK [1. Verify target rollback release directory exists] **********************
+ok: [daap-target]
+
+TASK [2. Fail if specified rollback release is missing] ************************
+skipping: [daap-target]
+
+TASK [3. Verify target release has valid application artifact] *****************
+ok: [daap-target]
+
+TASK [4. Fail if application artifact in rollback release is missing] **********
+skipping: [daap-target]
+
+TASK [5. Atomically point current symlink to rollback release] *****************
+changed: [daap-target]
+
+TASK [6. Restart application process via supervisor] ***************************
+changed: [daap-target]
+
+TASK [7. Wait for application port 8083 to become available] *******************
+ok: [daap-target]
+
+TASK [8. Verify health endpoint after rollback] ********************************
+ok: [daap-target]
+
+TASK [9. Report successful rollback confirmation] ******************************
+ok: [daap-target] => {
+    "msg": "Rollback SUCCESS: Active release restored to 1.0.9. Health check: Application is running."
+}
+
+PLAY RECAP *********************************************************************
+daap-target                : ok=8    changed=2    unreachable=0    failed=0    skipped=2    rescued=0    ignored=0   
+

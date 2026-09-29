@@ -1,0 +1,59 @@
+﻿
+PLAY [Configure and Deploy Automated Digital Asset Approval Platform] **********
+
+TASK [Gathering Facts] *********************************************************
+ok: [daap-target]
+
+TASK [1. Update apt cache] *****************************************************
+ok: [daap-target]
+
+TASK [2. Install required system packages (Java 17, curl, supervisor)] *********
+ok: [daap-target]
+
+TASK [3. Create dedicated system group for application] ************************
+ok: [daap-target]
+
+TASK [4. Create dedicated non-root application user] ***************************
+ok: [daap-target]
+
+TASK [5. Create application directory structure] *******************************
+ok: [daap-target] => (item=/opt/daap)
+ok: [daap-target] => (item=/opt/daap/releases)
+ok: [daap-target] => (item=/opt/daap/config)
+ok: [daap-target] => (item=/opt/daap/logs)
+
+TASK [6. Create versioned release directory] ***********************************
+ok: [daap-target]
+
+TASK [7. Deploy application configuration (application.properties)] ************
+ok: [daap-target]
+
+TASK [8. Deploy application WAR artifact] **************************************
+ok: [daap-target]
+
+TASK [9. Point current symlink to the release version] *************************
+ok: [daap-target]
+
+TASK [10. Configure supervisor service for application] ************************
+ok: [daap-target]
+
+TASK [11. Ensure supervisor service is active] *********************************
+ok: [daap-target]
+
+TASK [13. Ensure daap process is started in supervisor] ************************
+ok: [daap-target]
+
+TASK [14. Wait for application port 8083 to be available] **********************
+ok: [daap-target]
+
+TASK [15. Verify application health check endpoint] ****************************
+ok: [daap-target]
+
+TASK [16. Log health check confirmation] ***************************************
+ok: [daap-target] => {
+    "msg": "DAAP Application is healthy on port 8083. Status: Application is running."
+}
+
+PLAY RECAP *********************************************************************
+daap-target                : ok=16   changed=0    unreachable=0    failed=0    skipped=0    rescued=0    ignored=0   
+

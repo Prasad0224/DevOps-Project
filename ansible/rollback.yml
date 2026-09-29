@@ -1,0 +1,64 @@
+---
+- name: Rollback Application to Previous Stable Release
+  hosts: daap_nodes
+  become: true
+  vars:
+    app_port: 8083
+    base_dir: /opt/daap
+    releases_dir: "{{ base_dir }}/releases"
+    current_dir: "{{ base_dir }}/current"
+    rollback_version: "{{ lookup('env', 'ROLLBACK_VERSION') | default('1.0.9', true) }}"
+
+  tasks:
+    - name: 1. Verify target rollback release directory exists
+      stat:
+        path: "{{ releases_dir }}/{{ rollback_version }}"
+      register: target_release_stat
+
+    - name: 2. Fail if specified rollback release is missing
+      fail:
+        msg: "Cannot rollback: release {{ releases_dir }}/{{ rollback_version }} does not exist."
+      when: not target_release_stat.stat.exists or not target_release_stat.stat.isdir
+
+    - name: 3. Verify target release has valid application artifact
+      stat:
+        path: "{{ releases_dir }}/{{ rollback_version }}/app.war"
+      register: target_artifact_stat
+
+    - name: 4. Fail if application artifact in rollback release is missing
+      fail:
+        msg: "Cannot rollback: {{ releases_dir }}/{{ rollback_version }}/app.war not found."
+      when: not target_artifact_stat.stat.exists
+
+    - name: 5. Atomically point current symlink to rollback release
+      file:
+        src: "{{ releases_dir }}/{{ rollback_version }}"
+        dest: "{{ current_dir }}"
+        state: link
+        force: yes
+
+    - name: 6. Restart application process via supervisor
+      supervisorctl:
+        name: daap
+        state: restarted
+
+    - name: 7. Wait for application port {{ app_port }} to become available
+      wait_for:
+        port: "{{ app_port }}"
+        host: 127.0.0.1
+        delay: 4
+        timeout: 60
+        state: started
+
+    - name: 8. Verify health endpoint after rollback
+      uri:
+        url: "http://127.0.0.1:{{ app_port }}/api/health"
+        method: GET
+        status_code: 200
+        return_content: yes
+      register: rollback_health
+      failed_when: "'running' not in rollback_health.content"
+
+    - name: 9. Report successful rollback confirmation
+      debug:
+        msg: "Rollback SUCCESS: Active release restored to {{ rollback_version }}. Health check: {{ rollback_health.content }}"

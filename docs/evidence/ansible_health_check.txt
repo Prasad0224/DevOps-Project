@@ -1,0 +1,8 @@
+﻿HTTP /api/health Response:
+Status Code: 200
+Content: Application is running.
+
+HTTP / (Root UI) Response:
+Status Code: 200
+Title: Digital Asset Approval Platform
+Content Length: 21106 bytes

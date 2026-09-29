@@ -1,0 +1,159 @@
+---
+- name: Configure and Deploy Automated Digital Asset Approval Platform
+  hosts: daap_nodes
+  become: true
+  vars:
+    app_name: daap
+    app_user: daap
+    app_group: daap
+    app_port: 8083
+    app_version: "{{ lookup('env', 'APP_VERSION') | default('1.0.9', true) }}"
+    base_dir: /opt/daap
+    releases_dir: "{{ base_dir }}/releases"
+    current_dir: "{{ base_dir }}/current"
+    config_dir: "{{ base_dir }}/config"
+    logs_dir: "{{ base_dir }}/logs"
+    artifact_src: /target/digital-asset-approval-platform.war
+
+  tasks:
+    - name: 1. Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: 2. Install required system packages (Java 17, curl, supervisor)
+      apt:
+        name:
+          - openjdk-17-jre-headless
+          - curl
+          - supervisor
+        state: present
+
+    - name: 3. Create dedicated system group for application
+      group:
+        name: "{{ app_group }}"
+        state: present
+        system: yes
+
+    - name: 4. Create dedicated non-root application user
+      user:
+        name: "{{ app_user }}"
+        group: "{{ app_group }}"
+        system: yes
+        create_home: no
+        shell: /usr/sbin/nologin
+        state: present
+
+    - name: 5. Create application directory structure
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: '0755'
+      loop:
+        - "{{ base_dir }}"
+        - "{{ releases_dir }}"
+        - "{{ config_dir }}"
+        - "{{ logs_dir }}"
+
+    - name: 6. Create versioned release directory
+      file:
+        path: "{{ releases_dir }}/{{ app_version }}"
+        state: directory
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: '0755'
+
+    - name: 7. Deploy application configuration (application.properties)
+      copy:
+        dest: "{{ config_dir }}/application.properties"
+        content: |
+          spring.application.name=digital-asset-approval-platform
+          server.port={{ app_port }}
+          spring.servlet.multipart.max-file-size=10MB
+          spring.servlet.multipart.max-request-size=10MB
+          logging.level.com.platform=INFO
+          logging.level.org.springframework.web=INFO
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: '0644'
+
+    - name: 8. Deploy application WAR artifact
+      copy:
+        src: "{{ artifact_src }}"
+        dest: "{{ releases_dir }}/{{ app_version }}/app.war"
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        mode: '0755'
+        remote_src: no
+
+    - name: 9. Point current symlink to the release version
+      file:
+        src: "{{ releases_dir }}/{{ app_version }}"
+        dest: "{{ current_dir }}"
+        state: link
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        force: yes
+
+    - name: 10. Configure supervisor service for application
+      copy:
+        dest: /etc/supervisor/conf.d/daap.conf
+        content: |
+          [program:daap]
+          command=/usr/bin/java -jar {{ current_dir }}/app.war --spring.config.additional-location=file:{{ config_dir }}/application.properties --server.port={{ app_port }}
+          directory={{ current_dir }}
+          user={{ app_user }}
+          autostart=true
+          autorestart=true
+          startsecs=5
+          stopasgroup=true
+          killasgroup=true
+          stdout_logfile={{ logs_dir }}/app.log
+          stderr_logfile={{ logs_dir }}/app_error.log
+          stdout_logfile_maxbytes=10MB
+          stderr_logfile_maxbytes=10MB
+          environment=JAVA_HOME="/usr/lib/jvm/java-17-openjdk-amd64"
+        owner: root
+        group: root
+        mode: '0644'
+      notify: Reload Supervisor
+
+    - name: 11. Ensure supervisor service is active
+      service:
+        name: supervisor
+        state: started
+
+    - name: 12. Flush handlers to reload supervisor if config changed
+      meta: flush_handlers
+
+    - name: 13. Ensure daap process is started in supervisor
+      supervisorctl:
+        name: daap
+        state: started
+
+    - name: 14. Wait for application port {{ app_port }} to be available
+      wait_for:
+        port: "{{ app_port }}"
+        host: 127.0.0.1
+        delay: 5
+        timeout: 60
+        state: started
+
+    - name: 15. Verify application health check endpoint
+      uri:
+        url: "http://127.0.0.1:{{ app_port }}/api/health"
+        method: GET
+        status_code: 200
+        return_content: yes
+      register: health_response
+      failed_when: "'running' not in health_response.content"
+
+    - name: 16. Log health check confirmation
+      debug:
+        msg: "DAAP Application is healthy on port {{ app_port }}. Status: {{ health_response.content }}"
+
+  handlers:
+    - name: Reload Supervisor
+      shell: supervisorctl reread && supervisorctl update && supervisorctl restart daap

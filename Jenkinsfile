@@ -148,7 +148,7 @@ pipeline {
                     archiveArtifacts artifacts: 'target/selenium-screenshots/**', allowEmptyArchive: true
                 }
                 failure {
-                    echo 'CRITICAL: Selenium E2E tests failed on Tomcat! Aborting pipeline to block Production release and Docker deployment.'
+                    echo 'CRITICAL: Selenium E2E tests failed on Tomcat! Aborting pipeline to block Production release, Docker, and Ansible stages.'
                 }
             }
         }
@@ -272,14 +272,53 @@ pipeline {
                 }
             }
         }
+
+        stage('Ansible Provisioning') {
+            steps {
+                echo "=== Stage 13: Ansible Configuration Management & Provisioning (${IMAGE_TAG}) ==="
+                script {
+                    if (isUnix()) {
+                        sh """
+                            docker run --rm --network daap-net \
+                              -v "\${WORKSPACE}/ansible:/ansible" \
+                              -v "\${WORKSPACE}/target:/target" \
+                              -e APP_VERSION="${IMAGE_TAG}" \
+                              daap-ansible-img -i inventory.ini site.yml
+                        """
+                    } else {
+                        def winWs = "${WORKSPACE}".replace('/', '\\')
+                        bat """
+                            docker run --rm --network daap-net -v "${winWs}\\ansible:/ansible" -v "${winWs}\\target:/target" -e APP_VERSION=${IMAGE_TAG} daap-ansible-img -i inventory.ini site.yml
+                        """
+                    }
+                }
+            }
+        }
+
+        stage('Ansible Health Check') {
+            steps {
+                echo "=== Stage 14: Automated Health Verification on Target Node (Port 8083) ==="
+                script {
+                    if (isUnix()) {
+                        sh """
+                            curl -s -f http://localhost:8083/api/health | grep 'running'
+                        """
+                    } else {
+                        bat """
+                            powershell -Command "for (\$i=0; \$i -lt 30; \$i++) { try { \$r = Invoke-WebRequest -Uri 'http://localhost:8083/api/health' -UseBasicParsing -TimeoutSec 3; if (\$r.StatusCode -eq 200 -and \$r.Content -like '*running*') { Write-Host 'Ansible target node is healthy and responding.'; exit 0 } } catch {}; Start-Sleep -Seconds 2 }; Write-Error 'Ansible target health check failed on port 8083'; exit 1"
+                        """
+                    }
+                }
+            }
+        }
     }
 
     post {
         success {
-            echo "Pipeline SUCCESS: Build, Tests, Packaging, Tomcat Deployment, Selenium Verification, Docker CI/CD, and Production Promotion completed."
+            echo "Pipeline SUCCESS: Build, Tests, Packaging, Tomcat Deployment, Selenium Verification, Docker CI/CD, Production Promotion, and Ansible Provisioning completed."
         }
         failure {
-            echo "Pipeline FAILURE: Build stopped on error. Inspect surefire reports, selenium-screenshots, or docker logs."
+            echo "Pipeline FAILURE: Build stopped on error. Inspect surefire reports, selenium-screenshots, docker logs, or ansible output."
         }
     }
 }
