@@ -97,6 +97,7 @@ DevOps-Project/
 │   │   └── jenkins_pipeline_overview.png
 │   ├── backlog.md
 │   ├── DEVOPS_DOCUMENTATION.md
+│   ├── FINAL_PROJECT_DEMONSTRATION_GUIDE.md
 │   ├── LIMITATIONS_AND_FUTURE_ENHANCEMENTS.md
 │   ├── TROUBLESHOOTING.md
 │   └── VIVA_QA.md
@@ -271,6 +272,8 @@ Detailed documentation: [LIMITATIONS_AND_FUTURE_ENHANCEMENTS.md](docs/LIMITATION
 ## 13. Project Documentation Links
 
 * [DevOps Documentation](docs/DEVOPS_DOCUMENTATION.md) — Comprehensive technical reference for Tasks 1–15.
+* [Final Project Demonstration Guide](docs/FINAL_PROJECT_DEMONSTRATION_GUIDE.md) — Step-by-step practical manual for professor demonstration and viva.
+* [Master Task 1–15 Verification Report](FINAL_TASK_1_15_VERIFICATION.md) — Independent compliance and audit verification matrix.
 * [Troubleshooting Guide](docs/TROUBLESHOOTING.md) — Remediation guide for common deployment challenges.
 * [Limitations & Future Enhancements](docs/LIMITATIONS_AND_FUTURE_ENHANCEMENTS.md) — Architecture limits and production roadmap.
 * [DevOps Viva Q&A](docs/VIVA_QA.md) — Viva examination guide and technical questions.

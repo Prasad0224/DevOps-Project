@@ -1,7 +1,7 @@
 # Automated Digital Asset Approval Platform (DAAP) — DevOps Documentation
 
-**Repository**: [https://github.com/Prasad0224/DevOps-Project.git](https://github.com/Prasad0224/DevOps-Project.git)  
-**Branch**: `develop`  
+**Repository**: [https://github.com/Prasad0224/DevOps-Project.git](https://github.com/Prasad0224/DevOps-Project.git)
+**Branch**: `develop`
 **Overall Status**: **VERIFIED / SUBMISSION READY**
 
 ---
@@ -45,14 +45,62 @@ The system integrates application code, test automation, containerization, and c
 
 ---
 
-## 3. Tasks 1–6 Summary
-The engineering foundation established across Tasks 1 through 6 encompasses:
-* **Task 1 (Problem & Scope)**: Defined role segregation between Requesters and Reviewers with core submission constraints (files <= 10MB; formats: jpg, png, pdf, docx).
-* **Task 2 (Agile & Backlog)**: User stories US-01 through US-06 prioritized in `docs/backlog.md` with Git branching model (`feature/*`, `bugfix/*`, `release/*`, `develop`, `main`).
+## 3. Tasks 1–6 Summary & System Requirements Specification (SRS)
+
+### 3.1 SRS Summary & Functional Scope
+* **Functional Scope**: The system provides an end-to-end digital asset management portal where requesters submit digital media with metadata and reviewers assess, approve, reject, or request changes.
+* **Non-Functional Requirements**: Response time < 500ms for API endpoints; file upload capacity up to 10MB; 100% auditable logging of decisions; servlet container and containerized deployment readiness.
+
+### 3.2 Use-Case Model
+```
+            ┌─────────────────────────────────────────┐
+            │   Digital Asset Approval Platform       │
+            │                                         │
+(Requester) ────► [ Submit Digital Asset ]            │
+            │          │                              │
+            │          ▼ (includes)                   │
+            │     [ Validate File & Constraints ]     │
+            │                                         │
+            ────► [ Track Submission Status ]         │
+            │                                         │
+(Reviewer)  ────► [ View Review Queue ]               │
+            │          │                              │
+            │          ▼ (extends)                    │
+            │     [ Approve Asset ]                   │
+            │     [ Reject Asset ]                    │
+            │     [ Request Changes ]                 │
+            │          │                              │
+            │          ▼ (triggers)                   │
+            │     [ Record Audit Log ]                │
+            │     [ Trigger Event Notification ]      │
+            └─────────────────────────────────────────┘
+```
+
+### 3.3 Technology Stack & Tool Selection Rationale
+* **Programming Language**: **Java 17 LTS** — Provides modern language features (records, enhanced pattern matching), superior performance, and strict LTS stability.
+* **Framework**: **Spring Boot 3.1.2** — Production-ready enterprise framework with dependency injection, auto-configuration, and integrated Jakarta EE 10 standards.
+* **Build Automation**: **Apache Maven** — Chosen over Gradle and Ant for its declarative XML structure, standardized lifecycle phases (`compile`, `test`, `package`), mature plugin ecosystem (`maven-surefire-plugin`, `maven-war-plugin`), and native Jenkins integration.
+* **Database & State Management**: In-memory repository with concurrent thread-safe maps (`ConcurrentHashMap`) implementing repository interfaces (`AssetRequestRepository`, `ReviewActionRepository`, `AuditLogRepository`), offering ultra-fast execution with zero external database dependencies during CI testing.
+* **Deployment Target**: **Apache Tomcat 10.1.60** — Industry-standard Jakarta Servlet 6.0 container, supported via `SpringBootServletInitializer` and `<packaging>war</packaging>`.
+
+### 3.4 REST API Endpoint Specification
+
+| HTTP Method | Endpoint URI | Description | Request Body / Params | Expected Response |
+|---|---|---|---|---|
+| `GET` | `/api/health` | Service liveness probe | None | `200 OK` ("Application is running.") |
+| `POST` | `/api/requests` | Ingest new digital asset | JSON: `title`, `description`, `fileName`, `fileSizeBytes`, `requesterId` | `200 OK` (Serialized `AssetRequest` with UUID & status `PENDING`) |
+| `GET` | `/api/requests` | List all digital assets | None | `200 OK` (JSON array of `AssetRequest`) |
+| `GET` | `/api/requests/{id}` | Retrieve specific asset | Path variable `id` | `200 OK` (`AssetRequest`) or `404 Not Found` |
+| `POST` | `/api/requests/{id}/review` | Submit reviewer decision | JSON: `action` (`APPROVED`, `REJECTED`, `CHANGES_REQUESTED`), `reviewerId`, `comments` | `200 OK` (Updated `AssetRequest` with new status and audit log) |
+
+### 3.5 Core Engineering Foundation Summary (Tasks 1–6)
+* **Task 1 (Problem & Scope)**: Defined role segregation between Requesters and Reviewers with core submission constraints (files <= 10MB; formats: jpg, png, pdf, docx). Documented in `docs/backlog.md`.
+* **Task 2 (Agile & Backlog)**: User stories US-01 through US-06 prioritized in `docs/backlog.md` with Git branching model (`feature/*`, `bugfix/*`, `release/*`, `develop`, `main`), 15-week Scrum plan, and Definition of Done.
 * **Task 3 (Core Application & UI)**: Built on Java 17 LTS and Spring Boot 3.1.2 with `SpringBootServletInitializer` for WAR compatibility. Responsive web UI in `src/main/resources/static/index.html`.
 * **Task 4 (Version Control & Issues)**: Standardized linear Git history, GitHub issue templates in `.github/ISSUE_TEMPLATE/` (`bug_report.md`, `feature_request.md`), and contribution guidelines.
-* **Task 5 (Validation & Testing)**: Service-layer input and file constraint validation covered by automated unit tests in `AssetRequestServiceTest.java`.
-* **Task 6 (Review Workflow & Audit)**: Implementation of `APPROVED`, `REJECTED`, and `CHANGES_REQUESTED` state transitions with immutable audit trails (`AuditLogRepository`). 7/7 unit tests verified.
+* **Task 5 (Validation & Testing)**: Service-layer input and file constraint validation covered by automated unit tests in `AssetRequestServiceTest.java`. Delivered via PR #1 (`feature/asset-submission-workflow`).
+* **Task 6 (Review Workflow & Audit)**: Implementation of `APPROVED`, `REJECTED`, and `CHANGES_REQUESTED` state transitions with immutable audit trails (`AuditLogRepository`). 7/7 unit tests verified. Delivered via PR #2 (`feature/reviewer-approval-workflow`) with merge conflict resolution and release tag `v1.0.0-mvp`.
+
 
 ---
 
@@ -263,9 +311,10 @@ Detailed in [LIMITATIONS_AND_FUTURE_ENHANCEMENTS.md](LIMITATIONS_AND_FUTURE_ENHA
 ---
 
 ## 20. Companion Documentation Links
+* [Final Project Demonstration Guide](FINAL_PROJECT_DEMONSTRATION_GUIDE.md) — Step-by-step practical manual for professor demonstration and viva.
+* [Master Task 1–15 Verification Report](../FINAL_TASK_1_15_VERIFICATION.md) — Independent compliance and audit verification matrix.
 * [Troubleshooting Guide](TROUBLESHOOTING.md) — Remediation guide for common deployment challenges.
 * [Architectural Limitations and Roadmap](LIMITATIONS_AND_FUTURE_ENHANCEMENTS.md) — Comprehensive assessment of platform constraints and enhancements.
 * [DevOps Technical Viva Q&A Guide](VIVA_QA.md) — Examination preparation guide and operational explanations.
 * [Product Backlog Status](backlog.md) — Backlog items and MVP status.
 * [Ansible Playbook Reference](../ansible/README.md) — Instructions and setup for containerized Ansible orchestration.
-
