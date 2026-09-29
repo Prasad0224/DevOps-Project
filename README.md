@@ -1,96 +1,283 @@
 # Automated Digital Asset Approval Platform
 
-A modern, auditable web application and continuous delivery pipeline for submitting digital assets for approval with real-time status tracking, automated validation, and reviewer workflows.
+A modern, auditable web application and continuous delivery pipeline for submitting digital assets for approval with real-time status tracking, automated validation, reviewer decision workflows, containerization, and configuration management.
 
 ---
 
-## Project Overview & Verified Status
-
-| Component / Task | Requirement | Verified Status | Evidence |
-|---|---|---|---|
-| **Tasks 1–6** | Architecture, Models, REST APIs, Validation & Unit Tests | **VERIFIED** | 7/7 unit tests passing, Spring Boot 3 + Java 17 |
-| **Task 7** | Maven Build, WAR Packaging & Jenkins CI | **PASS** | Tomcat WAR packaging, Jenkins CI integration |
-| **Task 8** | Declarative Jenkinsfile & Tomcat Deployment | **PASS** | 8-stage pipeline deployed to Apache Tomcat 10.1.60 |
-| **Task 9** | Headless Selenium WebDriver E2E Test Suite | **PASS** | 5/5 E2E tests passing, screenshot on failure |
-| **Task 10** | Selenium CI/CD Quality Gate & Promotion | **PASS** | Build #5 verified failure gate; Build #6 verified promotion |
-
-* **Total Automated Tests**: 12/12 passed (7 Unit Tests + 5 Selenium E2E Tests).
-* **Jenkins Pipeline Execution**: Build #6 **SUCCESS** (`digital-asset-approval-platform-pipeline`).
-* **Failure Gate Verification**: Build #5 demonstrated that a Selenium failure aborts the pipeline and skips production promotion.
-* **Apache Tomcat Runtime**: Version 10.1.60 running on HTTP port **8081**.
-* **Live Application URL**: [http://localhost:8081/digital-asset-approval-platform](http://localhost:8081/digital-asset-approval-platform)
-* **Health Check URL**: [http://localhost:8081/digital-asset-approval-platform/api/health](http://localhost:8081/digital-asset-approval-platform/api/health)
+## 1. Project Purpose & Key Features
+The **Automated Digital Asset Approval Platform (DAAP)** centralizes and accelerates the review and approval lifecycle for organizational media assets (images, documents, PDFs):
+* **Asset Submission**: File upload and metadata ingestion with client-side and server-side constraints (<=10MB; jpg, png, pdf, docx).
+* **Reviewer Workflow**: Distinct reviewer portal supporting `APPROVED`, `REJECTED`, and `CHANGES_REQUESTED` actions with mandatory audit commentary.
+* **Audit Trail**: Immutable audit logging tracking each decision, actor, and timestamp.
+* **Real-Time Dashboard**: Interactive status tracking table and metric counters.
+* **Enterprise CI/CD**: End-to-end automated lifecycle from Git commit through Jenkins, Tomcat staging, Selenium regression, Docker packaging, local registry distribution, and Ansible configuration management.
 
 ---
 
-## Tech Stack
-* **Backend**: Java 17, Spring Boot 3.1.2
-* **Packaging**: Standard Web Archive (`.war`) via `spring-boot-starter-tomcat` (provided scope)
-* **Frontend**: Responsive Single-Page Application (HTML5, Vanilla CSS3, JavaScript)
-* **Web Server / Servlet Container**: Apache Tomcat 10.1.60 (Port 8081)
-* **CI/CD Automation**: Jenkins 2.568.3 (Java 21, Port 8080)
-* **End-to-End Testing**: Selenium WebDriver 4.16.1, WebDriverManager 5.6.3, Chrome Headless
-* **Unit Testing**: JUnit 5, Mockito, Spring Boot Test
+## 2. Technology Stack
+
+| Layer | Technology | Specification / Version |
+|---|---|---|
+| **Backend** | Java / Spring Boot | Java 17 LTS, Spring Boot 3.1.2 |
+| **Packaging** | Apache Maven | Maven 3.9.x, Standard WAR (`spring-boot-starter-tomcat` provided) |
+| **Frontend** | Single-Page Application | Responsive HTML5, Vanilla CSS3, JavaScript |
+| **Servlet Container** | Apache Tomcat | Version 10.1.60 (Port 8081) |
+| **CI/CD Orchestration**| Jenkins LTS | Version 2.568.3 (Port 8080) |
+| **Automated Testing** | Selenium WebDriver | Version 4.16.1, JUnit 5, Headless Chrome |
+| **Container Engine** | Docker Desktop | Engine 29.2.1, Temurin 17 JRE Base |
+| **Container Registry**| Docker Registry v2 | Official `registry:2` (Port 5000) |
+| **Container Release** | Docker Container | Port 8082 -> 8080 |
+| **Config Management** | Ansible Core | Containerized Controller (`daap-ansible-img`) |
+| **Target Host** | Ubuntu Linux | Ubuntu 22.04 LTS (`daap-target`, Port 8083) |
+| **Process Manager** | Supervisor | Version 4.2.4 (User `daap`) |
 
 ---
 
-## Jenkins CI/CD Pipeline Architecture
-
-The declarative [Jenkinsfile](Jenkinsfile) enforces sequential quality gates:
+## 3. High-Level Architecture
 
 ```
-[1. Checkout]
-      ↓
-[2. Build] (mvn compile)
-      ↓
-[3. Unit Tests] (mvn test - 7 unit tests) ─── [JUnit Test Reports Recorded]
-      ↓
-[4. Package] (mvn package - WAR build)
-      ↓
-[5. Archive] (target/*.war Fingerprinted)
-      ↓
-[6. Test/Staging Deployment] (Deployed to Tomcat 10.1.60 @ port 8081)
-      ↓
-[7. Selenium Tests] ───┬─── [FAILED] ──→ Pipeline Aborted (Production Promotion Skipped)
-                       └─── [PASSED] ──→ [8. Production Deployment]
-                                                    ↓
-                                      (Promoted to deployments/production/)
+[Developer] ──► [GitHub (origin/develop)]
+                       │
+                       ▼ (SCM Polling H/5)
+               [Jenkins CI/CD Pipeline (Port 8080)]
+                       │
+        ┌──────────────┼──────────────────────────────┐
+        ▼              ▼                              ▼
+  [Maven Build]  [Tomcat 10.1 (Port 8081)]    [Docker Engine]
+  - Compile      - WAR Staged                 - Build & Tag (1.0.${BUILD_NUMBER})
+  - 7 Unit Tests - 5 Selenium E2E Tests       - Push to Local Registry (Port 5000)
+                 - Quality Gate Trigger       - Deploy App Container (Port 8082)
+                                                      │
+                                                      ▼
+                                            [Ansible Provisioning]
+                                            - Target Host: daap-target (Port 8083)
+                                            - Idempotent State Management
+                                            - Atomic Rollback via Supervisor
 ```
-
-### Note on Production Promotion
-This single-machine academic DevOps project does not operate an external production server. The pipeline stage labeled **Production Deployment** implements **Production Artifact Promotion**, copying the Selenium-verified WAR artifact to the release directory `deployments/production/` upon successful test completion.
 
 ---
 
-## Local Development & Manual Run
+## 4. Repository Structure
 
-### 1. Build and Run Unit Tests
+```
+DevOps-Project/
+├── .github/
+│   └── ISSUE_TEMPLATE/
+│       ├── bug_report.md
+│       └── feature_request.md
+├── ansible/
+│   ├── Dockerfile.controller
+│   ├── Dockerfile.target
+│   ├── inventory.ini
+│   ├── requirements.yml
+│   ├── rollback.yml
+│   ├── site.yml
+│   └── README.md
+├── docs/
+│   ├── evidence/
+│   │   ├── ansible_first_run.txt
+│   │   ├── ansible_health_check.txt
+│   │   ├── ansible_idempotency_run.txt
+│   │   └── ansible_rollback_run.txt
+│   ├── screenshots/
+│   │   ├── ansible_first_run.png
+│   │   ├── ansible_health.png
+│   │   ├── ansible_idempotency.png
+│   │   ├── ansible_rollback.png
+│   │   ├── ansible_target_app.png
+│   │   ├── app_ui_live.png
+│   │   ├── docker_app_ui.png
+│   │   ├── docker_health_check.png
+│   │   ├── jenkins_build_5_failure_gate.png
+│   │   ├── jenkins_build_6_stages.png
+│   │   ├── jenkins_build_6_success.png
+│   │   ├── jenkins_build_9_console.png
+│   │   ├── jenkins_build_9_stages.png
+│   │   ├── jenkins_final_pipeline.png
+│   │   └── jenkins_pipeline_overview.png
+│   ├── backlog.md
+│   ├── DEVOPS_DOCUMENTATION.md
+│   ├── LIMITATIONS_AND_FUTURE_ENHANCEMENTS.md
+│   ├── TROUBLESHOOTING.md
+│   └── VIVA_QA.md
+├── src/
+│   ├── main/
+│   │   ├── java/com/platform/
+│   │   │   ├── controller/
+│   │   │   ├── model/
+│   │   │   ├── repository/
+│   │   │   ├── service/
+│   │   │   └── DigitalAssetApprovalApplication.java
+│   │   └── resources/
+│   │       ├── static/index.html
+│   │       └── application.properties
+│   └── test/
+│       └── java/com/platform/
+│           ├── selenium/AssetApprovalSeleniumTest.java
+│           └── service/AssetRequestServiceTest.java
+├── .dockerignore
+├── .gitignore
+├── Dockerfile
+├── Jenkinsfile
+├── pom.xml
+└── README.md
+```
+
+---
+
+## 5. Local Setup & Maven Commands
+
+### Prerequisites
+* **Java 17 LTS** (JDK)
+* **Apache Maven 3.9+**
+* **Google Chrome** (for Selenium E2E tests)
+* **Docker Desktop** (with WSL2 enabled)
+
+### Build & Unit Testing
 ```bash
+# Clean compilation and execution of 7 unit tests
 mvn clean test
-```
 
-### 2. Package WAR
-```bash
+# Package Tomcat-compatible WAR artifact
 mvn package -DskipTests
 ```
 
-### 3. Run Selenium Tests Against Tomcat
-Ensure Tomcat is running on port 8081 and the application is deployed:
+---
+
+## 6. Tomcat Deployment & Selenium Testing
+
+### Deploying to Tomcat
+1. Start Apache Tomcat 10.1.60 on port `8081` (`<TOMCAT_HOME>/bin/startup.bat`).
+2. Copy `target/digital-asset-approval-platform.war` to `<TOMCAT_HOME>/webapps/`.
+3. Application launches at: `http://localhost:8081/digital-asset-approval-platform`.
+
+### Running Selenium E2E Tests
 ```bash
 mvn test -Pselenium -Dapp.baseUrl=http://localhost:8081/digital-asset-approval-platform -Dselenium.headless=true
 ```
+* Runs 5 automated browser test cases in headless Chrome.
+* Automatically captures failure screenshots to `target/selenium-screenshots/` if assertions fail.
 
 ---
 
-## Repository Documentation Index
-* [FINAL_TASK_1_6_VERIFICATION.md](FINAL_TASK_1_6_VERIFICATION.md) — Detailed verification of Tasks 1 through 6.
-* [FINAL_TASK_7_10_AUDIT.md](FINAL_TASK_7_10_AUDIT.md) — Final audit and verification matrix for Tasks 7 through 10.
-* [TASK_7_IMPLEMENTATION.md](TASK_7_IMPLEMENTATION.md) — Task 7 implementation details.
-* [TASK_8_IMPLEMENTATION.md](TASK_8_IMPLEMENTATION.md) — Task 8 implementation details.
-* [TASK_9_IMPLEMENTATION.md](TASK_9_IMPLEMENTATION.md) — Task 9 implementation details.
-* [TASK_10_IMPLEMENTATION.md](TASK_10_IMPLEMENTATION.md) — Task 10 implementation details.
+## 7. Docker Execution & Local Registry
+
+### 1. Start Local Docker Registry
+```bash
+docker run -d --restart unless-stopped --name daap-registry -p 5000:5000 registry:2
+```
+
+### 2. Build and Tag Docker Image
+```bash
+docker build -t digital-asset-approval-platform:1.0.0 -t digital-asset-approval-platform:latest .
+docker tag digital-asset-approval-platform:1.0.0 localhost:5000/digital-asset-approval-platform:1.0.0
+docker tag digital-asset-approval-platform:latest localhost:5000/digital-asset-approval-platform:latest
+```
+
+### 3. Push to Local Registry
+```bash
+docker push localhost:5000/digital-asset-approval-platform:1.0.0
+docker push localhost:5000/digital-asset-approval-platform:latest
+```
+
+### 4. Run Docker Application Container
+```bash
+docker run -d --name digital-asset-approval-platform -p 8082:8080 localhost:5000/digital-asset-approval-platform:1.0.0
+```
+* Application accessible at `http://localhost:8082/`.
+* Health check: `http://localhost:8082/api/health`.
 
 ---
 
-## License
+## 8. Jenkins CI/CD Pipeline
+
+The declarative pipeline defined in [Jenkinsfile](Jenkinsfile) automates the complete 14-stage lifecycle:
+1. **Checkout**: Source code retrieved from `develop` branch.
+2. **Build**: Code compiled with `mvn compile`.
+3. **Unit Tests**: 7 unit tests executed and JUnit report published.
+4. **Package**: Production WAR generated via `mvn package -DskipTests`.
+5. **Archive**: WAR artifact fingerprinted and archived.
+6. **Staging Deployment**: Deployed to Apache Tomcat on port 8081; polls `/api/health`.
+7. **Selenium Tests**: 5 headless Chrome E2E tests against Tomcat. **Quality Gate**: failure aborts stages 8–14.
+8. **Docker Build**: Image built with build tag `1.0.${BUILD_NUMBER}`.
+9. **Docker Tag**: Tagged for local registry (`localhost:5000`) and `latest`.
+10. **Docker Push**: Pushed to local registry.
+11. **Docker Deploy**: Deployed fresh container on port 8082; health check validated.
+12. **Production Promotion**: Verified WAR promoted to `deployments/production/`.
+13. **Ansible Provisioning**: Provisions target node (`daap-target`) on port 8083 via supervisor.
+14. **Ansible Health Check**: Verified HTTP 200 on `http://localhost:8083/api/health`.
+
+---
+
+## 9. Ansible Configuration Management & Rollback
+
+### Provisioning the Target Host
+```bash
+# Execute main deployment playbook
+docker run --rm --network daap-net \
+  -v "${PWD}/ansible:/ansible" \
+  -v "${PWD}/target:/target" \
+  daap-ansible-img -i inventory.ini site.yml
+```
+* **First Run**: `ok=17 changed=11 failed=0` (Initial configuration complete).
+* **Second Run (Idempotency)**: `ok=16 changed=0 failed=0` (Zero redundant modifications).
+
+### Automated Rollback Execution
+```bash
+# Rollback active release to previous stable release (e.g. 1.0.9)
+docker run --rm --network daap-net \
+  -v "${PWD}/ansible:/ansible" \
+  -v "${PWD}/target:/target" \
+  -e "rollback_version=1.0.9" \
+  daap-ansible-img -i inventory.ini rollback.yml
+```
+* Result: `ok=8 changed=2 failed=0` (Atomically repointed symlink and verified HTTP 200).
+
+---
+
+## 10. Live Service Endpoints & Health Checks
+
+| Service | Environment / Runtime | URL | Health Check URL | Status |
+|---|---|---|---|---|
+| **Jenkins Orchestrator** | Standalone CI Server | `http://localhost:8080/` | Job Status | **ACTIVE** |
+| **Apache Tomcat 10.1** | Staging Application | `http://localhost:8081/digital-asset-approval-platform` | `/api/health` | **LIVE (200 OK)** |
+| **Docker Application** | Container Release | `http://localhost:8082/` | `http://localhost:8082/api/health` | **LIVE (200 OK)** |
+| **Ansible Target Node** | Ubuntu 22.04 Host | `http://localhost:8083/` | `http://localhost:8083/api/health` | **LIVE (200 OK)** |
+| **Local Docker Registry**| Registry v2 | `http://localhost:5000/v2/_catalog` | `/tags/list` | **ACTIVE** |
+
+---
+
+## 11. Verified Test Results
+
+* **Unit Tests**: **7/7 Passed** (`AssetRequestServiceTest.java`)
+* **Selenium E2E Tests**: **5/5 Passed** (`AssetApprovalSeleniumTest.java`)
+* **Total Automated Tests**: **12/12 Passed**
+* **Jenkins Pipeline**: Build #6 (Tasks 7–10), Build #9 (Tasks 11–12), Build #10 (Tasks 13–15) all **SUCCESS**
+* **Quality Gate**: Verified in Build #5 where Selenium failure aborted production release
+
+---
+
+## 12. Architectural Limitations
+
+* Single-host academic execution environment.
+* In-memory database persistence for asset records and audit logs.
+* Ephemeral local Docker registry (`localhost:5000`) without external cloud replication.
+* Plaintext HTTP transport across local service boundaries.
+
+Detailed documentation: [LIMITATIONS_AND_FUTURE_ENHANCEMENTS.md](docs/LIMITATIONS_AND_FUTURE_ENHANCEMENTS.md).
+
+---
+
+## 13. Project Documentation Links
+
+* [DevOps Documentation](docs/DEVOPS_DOCUMENTATION.md) — Comprehensive technical reference for Tasks 1–15.
+* [Troubleshooting Guide](docs/TROUBLESHOOTING.md) — Remediation guide for common deployment challenges.
+* [Limitations & Future Enhancements](docs/LIMITATIONS_AND_FUTURE_ENHANCEMENTS.md) — Architecture limits and production roadmap.
+* [DevOps Viva Q&A](docs/VIVA_QA.md) — Viva examination guide and technical questions.
+* [Product Backlog](docs/backlog.md) — Agile product backlog status.
+* [Ansible Documentation](ansible/README.md) — Playbook architecture and execution guidelines.
+
+---
+
+## 14. License
 MIT License

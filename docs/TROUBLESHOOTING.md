@@ -21,7 +21,7 @@ This guide details common operational challenges encountered across the CI/CD an
 ## 3. Jenkins Pipeline Failures & Permission Issues
 * **Symptom**: Jenkins job fails with permission denied or cannot execute batch commands.
 * **Cause**: Jenkins runs under a service account lacking rights to Docker pipe or directory structures.
-* **Fix**: Run Jenkins under the designated developer account (`prash`) with environment variables (`JAVA_HOME`, `PATH`) declared in Jenkins system configuration (`Manage Jenkins > System`).
+* **Fix**: Run Jenkins under the designated developer account (`prash`) with environment variables (`JAVA_HOME`, `PATH`) declared in Jenkins system configuration (*Manage Jenkins > System*).
 
 ---
 
@@ -73,3 +73,11 @@ This guide details common operational challenges encountered across the CI/CD an
 * **Symptom**: `ansible-playbook rollback.yml` fails stating release directory does not exist.
 * **Cause**: The specified rollback version was never deployed or was cleaned up.
 * **Fix**: Verify available release directories with `docker exec daap-target ls -la /opt/daap/releases/` and supply a valid version via `-e "rollback_version=<valid_version>"`.
+
+---
+
+## 11. Controlled Quality Gate Failure Demonstration
+* **Purpose**: Testing that pipeline aborts and skips production promotion when E2E tests fail.
+* **Defect Injection**: In `src/main/resources/static/index.html`, modify `feedback.textContent` during submission.
+* **Result**: Selenium test `test1_AssetSubmissionSuccess` fails assertion; Jenkins halts pipeline at Stage 7; Stages 8–14 are skipped; failure screenshot saved to `target/selenium-screenshots/`.
+* **Restoration**: Restore original message string in `index.html` and rebuild to achieve green status.
