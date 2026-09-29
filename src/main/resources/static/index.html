@@ -354,15 +354,9 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="fileName">File Name *</label>
-                        <input type="text" id="fileName" name="fileName" placeholder="e.g. hero-graphic.png" required>
-                        <div class="hint">Allowed types: jpg, png, pdf, docx</div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="fileSize">File Size (bytes) *</label>
-                        <input type="number" id="fileSize" name="fileSize" value="1048576" required min="1">
-                        <div class="hint">Maximum 10 MB (10,485,760 bytes)</div>
+                        <label for="file">Asset File *</label>
+                        <input type="file" id="file" name="file" accept=".jpg,.jpeg,.png,.pdf,.docx" required>
+                        <div class="hint">Allowed types: jpg, png, pdf, docx (Max 10 MB)</div>
                     </div>
 
                     <div class="form-group">
@@ -500,20 +494,47 @@
 
             const title = document.getElementById('title').value;
             const description = document.getElementById('description').value;
-            const fileName = document.getElementById('fileName').value;
-            const fileSize = document.getElementById('fileSize').value;
             const requesterId = document.getElementById('requesterId').value;
+            const fileInput = document.getElementById('file');
+            const file = fileInput.files ? fileInput.files[0] : null;
 
-            const params = new URLSearchParams();
-            params.append('title', title);
-            params.append('description', description);
-            params.append('fileName', fileName);
-            params.append('fileSize', fileSize);
-            params.append('requesterId', requesterId);
+            if (!file) {
+                feedback.className = 'feedback-message feedback-error';
+                feedback.textContent = 'Please select a file';
+                feedback.style.display = 'block';
+                return;
+            }
+
+            const allowedExtensions = ['jpg', 'png', 'pdf', 'docx'];
+            const fileName = file.name || '';
+            const ext = fileName.includes('.') ? fileName.split('.').pop().toLowerCase() : '';
+            if (!allowedExtensions.includes(ext)) {
+                feedback.className = 'feedback-message feedback-error';
+                feedback.textContent = 'Error: Unsupported file type';
+                feedback.style.display = 'block';
+                return;
+            }
+
+            const MAX_SIZE = 10 * 1024 * 1024; // 10MB
+            if (file.size > MAX_SIZE) {
+                feedback.className = 'feedback-message feedback-error';
+                feedback.textContent = 'Error: File size exceeds 10MB limit';
+                feedback.style.display = 'block';
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('title', title);
+            if (description) {
+                formData.append('description', description);
+            }
+            formData.append('requesterId', requesterId);
+            formData.append('file', file);
 
             try {
-                const res = await fetch(`${API_BASE}/requests?${params.toString()}`, {
-                    method: 'POST'
+                const res = await fetch(`${API_BASE}/requests`, {
+                    method: 'POST',
+                    body: formData
                 });
 
                 if (res.ok) {
@@ -523,6 +544,7 @@
                     feedback.style.display = 'block';
                     document.getElementById('title').value = '';
                     document.getElementById('description').value = '';
+                    fileInput.value = '';
                     fetchRequests();
                 } else {
                     const errText = await res.text();

@@ -5,6 +5,9 @@ import com.platform.model.RequestStatus;
 import com.platform.repository.AssetRequestRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.mock.web.MockMultipartFile;
+
+import java.io.File;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -91,5 +94,69 @@ class AssetRequestServiceTest {
         assertEquals(RequestStatus.CHANGES_REQUESTED, changed.getStatus());
         assertEquals(RequestStatus.CHANGES_REQUESTED, reviewActionRepository.findByRequestId(req.getId()).get(0).getAction());
         assertEquals("Please revise section 3", reviewActionRepository.findByRequestId(req.getId()).get(0).getComment());
+    }
+
+    @Test
+    void submitRequest_MultipartFile_Valid_StoresFileAndReturnsPending() {
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "campaign-hero.png",
+                "image/png",
+                "sample png binary content".getBytes()
+        );
+
+        AssetRequest result = service.submitRequest("Campaign Hero", "Summer Launch", file, "designer-1");
+
+        assertNotNull(result);
+        assertEquals("Campaign Hero", result.getTitle());
+        assertEquals(RequestStatus.PENDING, result.getStatus());
+        assertEquals("campaign-hero.png", result.getFileUrl());
+        // Verify file is stored in local uploads directory
+        File storedFile = new File("uploads", "campaign-hero.png");
+        assertTrue(storedFile.exists(), "Uploaded file should exist in uploads directory");
+    }
+
+    @Test
+    void submitRequest_MultipartFile_UnsupportedType_ThrowsException() {
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "script.sh",
+                "text/plain",
+                "echo hello".getBytes()
+        );
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            service.submitRequest("Script File", "Bash script", file, "user-1");
+        });
+    }
+
+    @Test
+    void submitRequest_MultipartFile_Empty_ThrowsException() {
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "empty.pdf",
+                "application/pdf",
+                new byte[0]
+        );
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            service.submitRequest("Empty Doc", "Empty doc", file, "user-1");
+        });
+    }
+
+    @Test
+    void submitRequest_MultipartFile_Oversized_ThrowsException() {
+        // Create MockMultipartFile with 11MB dummy content
+        byte[] largeBytes = new byte[11 * 1024 * 1024];
+        MockMultipartFile file = new MockMultipartFile(
+                "file",
+                "large.pdf",
+                "application/pdf",
+                largeBytes
+        );
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            service.submitRequest("Large Doc", "Large doc", file, "user-1");
+        });
     }
 }

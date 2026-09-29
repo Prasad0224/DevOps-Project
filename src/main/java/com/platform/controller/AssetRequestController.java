@@ -2,8 +2,11 @@ package com.platform.controller;
 
 import com.platform.model.AssetRequest;
 import com.platform.service.AssetRequestService;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -15,6 +18,22 @@ public class AssetRequestController {
 
     public AssetRequestController(AssetRequestService service) {
         this.service = service;
+    }
+
+    @PostMapping(consumes = { MediaType.MULTIPART_FORM_DATA_VALUE })
+    public ResponseEntity<?> submitRequestMultipart(
+            @RequestParam("title") String title,
+            @RequestParam(value = "description", required = false) String description,
+            @RequestParam("requesterId") String requesterId,
+            @RequestParam("file") MultipartFile file) {
+        try {
+            AssetRequest request = service.submitRequest(title, description, file, requesterId);
+            return ResponseEntity.ok(request);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body("Error storing file: " + e.getMessage());
+        }
     }
 
     @PostMapping
@@ -30,6 +49,11 @@ public class AssetRequestController {
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<String> handleMaxSizeException(MaxUploadSizeExceededException exc) {
+        return ResponseEntity.badRequest().body("File size exceeds 10MB limit");
     }
 
     @GetMapping

@@ -32,6 +32,12 @@ public class AssetApprovalSeleniumTest {
     private static String baseUrl;
     private static final String SCREENSHOT_DIR = "target/selenium-screenshots/";
 
+    private static Path testPngPath;
+    private static Path testPdfPath;
+    private static Path testDocxPath;
+    private static Path testExePath;
+    private static Path testLargePdfPath;
+
     // JUnit 5 extension to automatically capture screenshot on test failure
     @org.junit.jupiter.api.extension.RegisterExtension
     TestWatcher screenshotWatcher = new TestWatcher() {
@@ -87,6 +93,35 @@ public class AssetApprovalSeleniumTest {
 
         // Create screenshot directory
         new File(SCREENSHOT_DIR).mkdirs();
+
+        // Create actual test files for Selenium upload testing
+        Path testFilesDir = Paths.get("target", "selenium-test-files");
+        try {
+            Files.createDirectories(testFilesDir);
+            testPngPath = testFilesDir.resolve("banner.png").toAbsolutePath();
+            testPdfPath = testFilesDir.resolve("document.pdf").toAbsolutePath();
+            testDocxPath = testFilesDir.resolve("bad-draft.docx").toAbsolutePath();
+            testExePath = testFilesDir.resolve("dangerous_script.exe").toAbsolutePath();
+            testLargePdfPath = testFilesDir.resolve("large_movie.pdf").toAbsolutePath();
+
+            Files.write(testPngPath, "dummy png asset data".getBytes());
+            Files.write(testPdfPath, "dummy pdf asset data".getBytes());
+            Files.write(testDocxPath, "dummy docx asset data".getBytes());
+            Files.write(testExePath, "dangerous executable payload".getBytes());
+            try (java.io.RandomAccessFile raf = new java.io.RandomAccessFile(testLargePdfPath.toFile(), "rw")) {
+                raf.setLength(15 * 1024 * 1024); // 15MB
+            }
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to prepare test upload files", e);
+        }
+    }
+
+    private WebElement getFileInput() {
+        List<WebElement> elements = driver.findElements(By.id("file"));
+        if (!elements.isEmpty()) {
+            return elements.get(0);
+        }
+        return driver.findElement(By.id("fileName"));
     }
 
     @AfterAll
@@ -121,8 +156,7 @@ public class AssetApprovalSeleniumTest {
         
         WebElement titleInput = driver.findElement(By.id("title"));
         WebElement descInput = driver.findElement(By.id("description"));
-        WebElement fileInput = driver.findElement(By.id("fileName"));
-        WebElement sizeInput = driver.findElement(By.id("fileSize"));
+        WebElement fileInput = getFileInput();
         WebElement reqInput = driver.findElement(By.id("requesterId"));
         WebElement submitBtn = driver.findElement(By.id("submit-btn"));
 
@@ -130,10 +164,7 @@ public class AssetApprovalSeleniumTest {
         titleInput.sendKeys(testTitle);
         descInput.clear();
         descInput.sendKeys("Hero graphic for product launch");
-        fileInput.clear();
-        fileInput.sendKeys("banner.png");
-        sizeInput.clear();
-        sizeInput.sendKeys("2097152"); // 2 MB
+        fileInput.sendKeys(testPngPath.toString());
         reqInput.clear();
         reqInput.sendKeys("marketing-lead");
 
@@ -157,16 +188,12 @@ public class AssetApprovalSeleniumTest {
     @Test
     void test2_AssetSubmissionValidation_UnsupportedExtension() {
         WebElement titleInput = driver.findElement(By.id("title"));
-        WebElement fileInput = driver.findElement(By.id("fileName"));
-        WebElement sizeInput = driver.findElement(By.id("fileSize"));
+        WebElement fileInput = getFileInput();
         WebElement submitBtn = driver.findElement(By.id("submit-btn"));
 
         titleInput.clear();
         titleInput.sendKeys("Executable File Attempt");
-        fileInput.clear();
-        fileInput.sendKeys("dangerous_script.exe");
-        sizeInput.clear();
-        sizeInput.sendKeys("1024");
+        fileInput.sendKeys(testExePath.toString());
 
         submitBtn.click();
 
@@ -181,16 +208,12 @@ public class AssetApprovalSeleniumTest {
     @Test
     void test3_AssetSubmissionValidation_OversizedFile() {
         WebElement titleInput = driver.findElement(By.id("title"));
-        WebElement fileInput = driver.findElement(By.id("fileName"));
-        WebElement sizeInput = driver.findElement(By.id("fileSize"));
+        WebElement fileInput = getFileInput();
         WebElement submitBtn = driver.findElement(By.id("submit-btn"));
 
         titleInput.clear();
         titleInput.sendKeys("Oversized Video Asset");
-        fileInput.clear();
-        fileInput.sendKeys("large_movie.pdf");
-        sizeInput.clear();
-        sizeInput.sendKeys("15728640"); // 15MB > 10MB limit
+        fileInput.sendKeys(testLargePdfPath.toString());
 
         submitBtn.click();
 
@@ -206,9 +229,7 @@ public class AssetApprovalSeleniumTest {
 
         // 1. Submit Asset
         driver.findElement(By.id("title")).sendKeys(testTitle);
-        driver.findElement(By.id("fileName")).sendKeys("document.pdf");
-        driver.findElement(By.id("fileSize")).clear();
-        driver.findElement(By.id("fileSize")).sendKeys("512000");
+        getFileInput().sendKeys(testPdfPath.toString());
         driver.findElement(By.id("submit-btn")).click();
 
         // 2. Wait for submission to appear in table
@@ -244,7 +265,7 @@ public class AssetApprovalSeleniumTest {
         // --- Part A: Reject Workflow ---
         String rejectTitle = "Reject Test Asset " + System.currentTimeMillis();
         driver.findElement(By.id("title")).sendKeys(rejectTitle);
-        driver.findElement(By.id("fileName")).sendKeys("bad-draft.docx");
+        getFileInput().sendKeys(testDocxPath.toString());
         driver.findElement(By.id("submit-btn")).click();
 
         wait.until(ExpectedConditions.textToBePresentInElementLocated(By.id("requests-tbody"), rejectTitle));
@@ -264,7 +285,7 @@ public class AssetApprovalSeleniumTest {
         // --- Part B: Request Changes Workflow ---
         String reviseTitle = "Revision Test Asset " + System.currentTimeMillis();
         driver.findElement(By.id("title")).sendKeys(reviseTitle);
-        driver.findElement(By.id("fileName")).sendKeys("draft-graphic.png");
+        getFileInput().sendKeys(testPngPath.toString());
         driver.findElement(By.id("submit-btn")).click();
 
         wait.until(ExpectedConditions.textToBePresentInElementLocated(By.id("requests-tbody"), reviseTitle));
