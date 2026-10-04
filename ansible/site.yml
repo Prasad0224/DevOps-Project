@@ -13,6 +13,7 @@
     current_dir: "{{ base_dir }}/current"
     config_dir: "{{ base_dir }}/config"
     logs_dir: "{{ base_dir }}/logs"
+    shared_dir: "{{ base_dir }}/shared"
     artifact_src: /target/digital-asset-approval-platform.war
 
   tasks:
@@ -56,6 +57,8 @@
         - "{{ releases_dir }}"
         - "{{ config_dir }}"
         - "{{ logs_dir }}"
+        - "{{ shared_dir }}"
+        - "{{ shared_dir }}/uploads"
 
     - name: 6. Create versioned release directory
       file:
@@ -92,6 +95,15 @@
       file:
         src: "{{ releases_dir }}/{{ app_version }}"
         dest: "{{ current_dir }}"
+        state: link
+        owner: "{{ app_user }}"
+        group: "{{ app_group }}"
+        force: yes
+
+    - name: 9b. Link uploads directory to shared uploads
+      file:
+        src: "{{ shared_dir }}/uploads"
+        dest: "{{ releases_dir }}/{{ app_version }}/uploads"
         state: link
         owner: "{{ app_user }}"
         group: "{{ app_group }}"

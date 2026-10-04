@@ -215,7 +215,7 @@ pipeline {
                             docker stop ${DOCKER_CONTAINER} || true
                             docker rm ${DOCKER_CONTAINER} || true
                             docker pull ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
-                            docker run -d --name ${DOCKER_CONTAINER} -p ${DOCKER_HOST_PORT}:${DOCKER_CONTAINER_PORT} ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+                            docker run -d --name ${DOCKER_CONTAINER} -p ${DOCKER_HOST_PORT}:${DOCKER_CONTAINER_PORT} -v daap-uploads:/app/uploads ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
                         """
                         sh """
                             sleep 5
@@ -233,7 +233,7 @@ pipeline {
                         bat """
                             powershell -Command "try { docker stop ${DOCKER_CONTAINER} 2>&1 | Out-Null } catch {}; try { docker rm ${DOCKER_CONTAINER} 2>&1 | Out-Null } catch {}"
                             docker pull ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
-                            docker run -d --name ${DOCKER_CONTAINER} -p ${DOCKER_HOST_PORT}:${DOCKER_CONTAINER_PORT} ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+                            docker run -d --name ${DOCKER_CONTAINER} -p ${DOCKER_HOST_PORT}:${DOCKER_CONTAINER_PORT} -v daap-uploads:/app/uploads ${DOCKER_REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
                             powershell -Command "Start-Sleep -Seconds 5; for (\$i=0; \$i -lt 30; \$i++) { try { \$r = Invoke-WebRequest -Uri 'http://localhost:${DOCKER_HOST_PORT}/api/health' -UseBasicParsing -TimeoutSec 3; if (\$r.StatusCode -eq 200 -and \$r.Content -like '*running*') { Write-Host 'Fresh Docker container is healthy and responding.'; exit 0 } } catch {}; Start-Sleep -Seconds 2 }; Write-Error 'Docker container health check failed on port ${DOCKER_HOST_PORT}'; exit 1"
                             docker ps --filter "name=${DOCKER_CONTAINER}"
                             docker logs --tail 30 ${DOCKER_CONTAINER}

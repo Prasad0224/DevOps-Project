@@ -52,6 +52,49 @@ If time is limited, execute this rapid 4-step walk-through:
 
 ---
 
+## Complete Role-Based Workflow Demonstration Walkthrough
+
+Use this demonstration to showcase the full enterprise approval lifecycle requested by the evaluator:
+
+### Demo Accounts
+* **USER**: Username `user`, Password `user123` (Role: Standard Requester)
+* **ADMIN**: Username `admin`, Password `admin123` (Role: Administrator / Approver)
+
+### End-to-End Live Workflow Steps
+1. **User Login & Dashboard**:
+   - Navigate to `http://localhost:8081/digital-asset-approval-platform`
+   - Log in as `user` / `user123`.
+   - Point out the dedicated **User Dashboard**: submission form, personal submitted assets list, feedback display, and notification center.
+2. **Submit Asset (Real Upload)**:
+   - Enter Title: `Campaign Banner Q4`, select department, and upload an image (e.g., JPEG or PNG).
+   - Click **Submit Asset for Approval**.
+   - Show that the status is set to `PENDING` and a notification confirms submission.
+3. **Admin Login & Queue Review**:
+   - Log out and log in as `admin` / `admin123`.
+   - Point out the dedicated **Admin Dashboard**: shows all pending submissions, review controls, and admin notification center.
+   - Click **View Details & Review** on the newly submitted asset.
+   - Show asset metadata, preview the actual uploaded file, and click **Download Asset** to verify file integrity.
+4. **Request Changes with Feedback**:
+   - In the review modal, select decision **Request Changes**.
+   - Enter detailed comments: *"Please enhance contrast and update brand typography."*
+   - Click **Submit Decision**.
+   - Status updates to `CHANGES_REQUESTED`.
+5. **User Feedback Visibility & Resubmission**:
+   - Log back in as `user` / `user123`.
+   - Check notifications: alert shows that changes were requested with the admin's comment.
+   - In the asset card/table, show that the reviewer's feedback is prominently displayed.
+   - Click **Resubmit Asset**, select the revised file, and submit.
+   - Status resets to `PENDING`, ready for re-review.
+6. **Admin Final Approval**:
+   - Log back in as `admin` / `admin123`.
+   - Open the resubmitted asset, review the updated file, select **Approve**, enter feedback *"All revisions verified. Approved for launch."*, and submit.
+   - Status updates to `APPROVED`.
+7. **Audit Trail & Role Security**:
+   - View **Review History / Audit Log**: show the full immutable chronological timeline of submissions, feedback, resubmission, and approval.
+   - Demonstrate security: non-admin users cannot access admin endpoints (`403 Forbidden` enforced backend and frontend).
+
+---
+
 ## Full Task-by-Task Demonstration
 
 ---

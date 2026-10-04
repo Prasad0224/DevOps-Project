@@ -7,6 +7,7 @@
     base_dir: /opt/daap
     releases_dir: "{{ base_dir }}/releases"
     current_dir: "{{ base_dir }}/current"
+    shared_dir: "{{ base_dir }}/shared"
     rollback_version: "{{ lookup('env', 'ROLLBACK_VERSION') | default('1.0.9', true) }}"
 
   tasks:
@@ -34,6 +35,13 @@
       file:
         src: "{{ releases_dir }}/{{ rollback_version }}"
         dest: "{{ current_dir }}"
+        state: link
+        force: yes
+
+    - name: 5b. Ensure rollback release uploads links to shared uploads
+      file:
+        src: "{{ shared_dir }}/uploads"
+        dest: "{{ releases_dir }}/{{ rollback_version }}/uploads"
         state: link
         force: yes
 

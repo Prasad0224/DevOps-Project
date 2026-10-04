@@ -91,24 +91,27 @@ Every single requirement across Tasks 1 through 15 has been independently inspec
 
 ## Final Test Results
 
-* **Maven Unit Tests**: **7/7 Passed** (`AssetRequestServiceTest.java`)
-* **Selenium E2E Tests**: **5/5 Passed** (`AssetApprovalSeleniumTest.java`)
-* **Total Automated Tests**: **12/12 Passed**
+* **Maven Unit Tests**: **19/19 Passed** (`AssetRequestServiceTest.java`)
+  - Verification of asset submission, metadata validation, role authorization, file size limits (<=10MB), collision-free UUID storage, approval, rejection, changes requested, notification triggers, and user resubmission.
+* **Selenium E2E Tests**: **13/13 Passed** (`AssetApprovalSeleniumTest.java`)
+  - Full automated coverage of authentication (`USER` and `ADMIN`), role-based routing, dashboard metrics, real multipart file uploads, admin review with comments, changes requested feedback, user resubmission, and audit timeline verification.
+* **Total Automated Tests**: **32/32 Passed** (100% pass rate)
+* **Docker Persistent Storage**: Verified `daap-uploads:/app/uploads` volume mount ensuring uploaded files survive container recreation and restarts.
+* **Docker Deployment**: Container `digital-asset-approval-platform` live on `http://localhost:8082/` with health endpoint returning `HTTP 200 OK`. Full 18-step E2E flow verified.
+* **Local Docker Registry**: `daap-registry` live on `http://localhost:5000/v2/_catalog` serving tags `1.0.12` and `latest`.
+* **Ansible Configuration Management**:
+  - Initial Run: `ok=17 changed=5 failed=0`
+  - Idempotency Run: `ok=17 changed=0 failed=0` (Strict zero unintended modifications)
+  - Rollback Run: `ok=9 changed=3 failed=0` (Restored release 1.0.11 with `/opt/daap/shared/uploads` persistence)
+  - Re-promotion Run: `ok=9 changed=2 failed=0` (Restored release 1.0.12)
+  - Target Node: `daap-target` serving on port 8083 -> `HTTP 200 OK`
 * **Jenkins Pipeline**:
   - Build #5: Verified Selenium failure gate (Production stage skipped)
   - Build #6: Tasks 7–10 verification (**SUCCESS**)
   - Build #9: Tasks 11–12 Docker continuous deployment (**SUCCESS**)
   - Build #10: Tasks 13–15 full 14-stage lifecycle (**SUCCESS**)
-  - Build #11: Post-cleanup automatic trigger (**SUCCESS**)
-* **Docker Verification**:
-  - Registry running on `localhost:5000` (`daap-registry`)
-  - Container running on `localhost:8082` (`digital-asset-approval-platform`)
-  - Health endpoint: `http://localhost:8082/api/health` -> `HTTP 200 OK`
-* **Ansible Verification**:
-  - Initial Run: `ok=17 changed=11 failed=0`
-  - Idempotency Run: `ok=16 changed=0 failed=0`
-  - Rollback Run: `ok=8 changed=2 failed=0` (Restored version 1.0.9)
-  - Target Node: `daap-target` serving on port 8083 -> `HTTP 200 OK`
+  - Build #13: 14-stage automated pipeline (**SUCCESS**)
+  - Build #14: SCM evaluation against remote branch `develop` (commit `f94ecde`) with all historical builds 4–14 intact.
 
 ---
 

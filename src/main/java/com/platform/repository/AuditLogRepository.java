@@ -3,7 +3,7 @@ package com.platform.repository;
 import com.platform.model.AuditLog;
 import org.springframework.stereotype.Repository;
 
-
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,9 +18,14 @@ public class AuditLogRepository {
         return log;
     }
 
+    public List<AuditLog> findAll() {
+        return new ArrayList<>(storage.values());
+    }
+
     public List<AuditLog> findByRequestId(String requestId) {
         return storage.values().stream()
                 .filter(log -> log.getRequestId().equals(requestId))
+                .sorted((a, b) -> a.getTimestamp().compareTo(b.getTimestamp()))
                 .collect(Collectors.toList());
     }
 }

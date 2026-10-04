@@ -1,16 +1,22 @@
 # Automated Digital Asset Approval Platform
 
-A modern, auditable web application and continuous delivery pipeline for submitting digital assets for approval with real-time status tracking, automated validation, reviewer decision workflows, containerization, and configuration management.
+A production-ready, auditable web application and continuous delivery pipeline for submitting digital assets for role-based approval with authentication, real-time status tracking, reviewer decision workflows, feedback visibility, resubmission, notifications, containerization, and configuration management.
 
 ---
 
 ## 1. Project Purpose & Key Features
 The **Automated Digital Asset Approval Platform (DAAP)** centralizes and accelerates the review and approval lifecycle for organizational media assets (images, documents, PDFs):
-* **Asset Submission**: File upload and metadata ingestion with client-side and server-side constraints (<=10MB; jpg, png, pdf, docx).
-* **Reviewer Workflow**: Distinct reviewer portal supporting `APPROVED`, `REJECTED`, and `CHANGES_REQUESTED` actions with mandatory audit commentary.
-* **Audit Trail**: Immutable audit logging tracking each decision, actor, and timestamp.
-* **Real-Time Dashboard**: Interactive status tracking table and metric counters.
-* **Enterprise CI/CD**: End-to-end automated lifecycle from Git commit through Jenkins, Tomcat staging, Selenium regression, Docker packaging, local registry distribution, and Ansible configuration management.
+* **Role-Based Authentication**: Session-based login with two roles — `USER` and `ADMIN`. Demo accounts: `user/user123` and `admin/admin123`.
+* **Separate Dashboards**: Dedicated USER and ADMIN dashboards with role enforcement on both frontend and backend.
+* **Asset Submission**: Real multipart file upload with client-side and server-side validation (≤10 MB; jpg, jpeg, png, pdf, docx). Files stored with UUID-prefixed names to prevent collisions.
+* **Reviewer Workflow**: Admin portal supporting `APPROVED`, `REJECTED`, and `CHANGES_REQUESTED` actions with mandatory comment/feedback.
+* **Feedback Visibility**: Admin comments stored and displayed to users in dashboard and request history.
+* **Resubmission**: Users upload revised assets when `CHANGES_REQUESTED`; resets status to `PENDING`.
+* **In-Memory Notifications**: Real notification events shown in UI for USER (status updates) and ADMIN (new submissions).
+* **Audit Trail & Review History**: Chronological timeline of all events per request, visible to both roles.
+* **File Preview & Download**: Admins can preview images/PDFs inline and download uploaded files.
+* **Authorization Enforcement**: Backend `403`/`401` for unauthorized access; frontend hides admin controls from users.
+* **Enterprise CI/CD**: End-to-end from Git commit through Jenkins, Tomcat staging, Selenium regression (13 tests), Docker packaging, registry, and Ansible provisioning.
 
 ---
 
@@ -45,7 +51,7 @@ The **Automated Digital Asset Approval Platform (DAAP)** centralizes and acceler
         ▼              ▼                              ▼
   [Maven Build]  [Tomcat 10.1 (Port 8081)]    [Docker Engine]
   - Compile      - WAR Staged                 - Build & Tag (1.0.${BUILD_NUMBER})
-  - 7 Unit Tests - 5 Selenium E2E Tests       - Push to Local Registry (Port 5000)
+  - 19 Unit Tests- 13 Selenium E2E Tests      - Push to Local Registry (Port 5000)
                  - Quality Gate Trigger       - Deploy App Container (Port 8082)
                                                       │
                                                       ▼
@@ -136,7 +142,7 @@ DevOps-Project/
 
 ### Build & Unit Testing
 ```bash
-# Clean compilation and execution of 7 unit tests
+# Clean compilation and execution of 19 unit tests
 mvn clean test
 
 # Package Tomcat-compatible WAR artifact
@@ -156,7 +162,7 @@ mvn package -DskipTests
 ```bash
 mvn test -Pselenium -Dapp.baseUrl=http://localhost:8081/digital-asset-approval-platform -Dselenium.headless=true
 ```
-* Runs 5 automated browser test cases in headless Chrome.
+* Runs 13 automated browser test cases in headless Chrome.
 * Automatically captures failure screenshots to `target/selenium-screenshots/` if assertions fail.
 
 ---
@@ -195,11 +201,11 @@ docker run -d --name digital-asset-approval-platform -p 8082:8080 localhost:5000
 The declarative pipeline defined in [Jenkinsfile](Jenkinsfile) automates the complete 14-stage lifecycle:
 1. **Checkout**: Source code retrieved from `develop` branch.
 2. **Build**: Code compiled with `mvn compile`.
-3. **Unit Tests**: 7 unit tests executed and JUnit report published.
+3. **Unit Tests**: 19 unit tests executed and JUnit report published.
 4. **Package**: Production WAR generated via `mvn package -DskipTests`.
 5. **Archive**: WAR artifact fingerprinted and archived.
 6. **Staging Deployment**: Deployed to Apache Tomcat on port 8081; polls `/api/health`.
-7. **Selenium Tests**: 5 headless Chrome E2E tests against Tomcat. **Quality Gate**: failure aborts stages 8–14.
+7. **Selenium Tests**: 13 headless Chrome E2E tests against Tomcat. **Quality Gate**: failure aborts stages 8–14.
 8. **Docker Build**: Image built with build tag `1.0.${BUILD_NUMBER}`.
 9. **Docker Tag**: Tagged for local registry (`localhost:5000`) and `latest`.
 10. **Docker Push**: Pushed to local registry.
@@ -250,9 +256,9 @@ docker run --rm --network daap-net \
 
 ## 11. Verified Test Results
 
-* **Unit Tests**: **7/7 Passed** (`AssetRequestServiceTest.java`)
-* **Selenium E2E Tests**: **5/5 Passed** (`AssetApprovalSeleniumTest.java`)
-* **Total Automated Tests**: **12/12 Passed**
+* **Unit Tests**: **19/19 Passed** (`AssetRequestServiceTest.java`)
+* **Selenium E2E Tests**: **13/13 Passed** (`AssetApprovalSeleniumTest.java`)
+* **Total Automated Tests**: **32/32 Passed**
 * **Jenkins Pipeline**: Build #6 (Tasks 7–10), Build #9 (Tasks 11–12), Build #10 (Tasks 13–15) all **SUCCESS**
 * **Quality Gate**: Verified in Build #5 where Selenium failure aborted production release
 

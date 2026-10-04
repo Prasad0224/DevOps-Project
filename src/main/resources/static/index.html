@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Digital Asset Approval Platform</title>
+    <meta name="description" content="Automated Digital Asset Approval Platform — submit, review, approve and track digital assets with role-based access control.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -12,6 +13,7 @@
             --bg-primary: #0f172a;
             --bg-secondary: #1e293b;
             --bg-card: #1e293b;
+            --bg-input: #0f172a;
             --border-color: #334155;
             --text-primary: #f8fafc;
             --text-secondary: #94a3b8;
@@ -20,118 +22,116 @@
             --success: #10b981;
             --danger: #ef4444;
             --warning: #f59e0b;
+            --purple: #8b5cf6;
             --radius: 8px;
         }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+        body { background-color: var(--bg-primary); color: var(--text-primary); min-height: 100vh; }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-        }
+        /* ===== SCREENS ===== */
+        .screen { display: none; }
+        .screen.active { display: block; }
 
-        body {
-            background-color: var(--bg-primary);
-            color: var(--text-primary);
+        /* ===== LOGIN ===== */
+        #login-screen {
             min-height: 100vh;
-            padding: 24px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        header {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            padding-bottom: 24px;
+            justify-content: center;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+        }
+        .login-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 40px;
+            width: 380px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+        }
+        .login-logo { text-align: center; margin-bottom: 32px; }
+        .login-logo h1 { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; margin-top: 12px; }
+        .login-logo p { color: var(--text-secondary); font-size: 13px; margin-top: 6px; }
+        .login-icon { font-size: 40px; }
+
+        /* ===== GLOBAL HEADER ===== */
+        .app-header {
+            background: var(--bg-secondary);
             border-bottom: 1px solid var(--border-color);
-            margin-bottom: 28px;
+            padding: 0 24px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
         }
-
-        .logo-area h1 {
-            font-size: 24px;
+        .header-left { display: flex; align-items: center; gap: 12px; }
+        .app-logo { font-size: 16px; font-weight: 700; letter-spacing: -0.3px; }
+        .header-right { display: flex; align-items: center; gap: 12px; }
+        .role-badge {
+            font-size: 11px;
             font-weight: 700;
-            letter-spacing: -0.5px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .badge-system {
-            font-size: 12px;
-            background: rgba(59, 130, 246, 0.15);
-            color: #60a5fa;
-            border: 1px solid rgba(59, 130, 246, 0.3);
-            padding: 4px 8px;
+            padding: 4px 10px;
             border-radius: 9999px;
-            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
+        .role-USER { background: rgba(59,130,246,0.15); color: #60a5fa; border: 1px solid rgba(59,130,246,0.3); }
+        .role-ADMIN { background: rgba(139,92,246,0.15); color: #a78bfa; border: 1px solid rgba(139,92,246,0.3); }
+        .user-info { font-size: 13px; color: var(--text-secondary); }
+        .health-indicator { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-secondary); }
+        .health-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--success); box-shadow: 0 0 6px var(--success); }
 
-        .health-indicator {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
+        /* Notification bell */
+        .notif-btn {
+            position: relative;
+            background: transparent;
+            border: 1px solid var(--border-color);
             color: var(--text-secondary);
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.2s;
+        }
+        .notif-btn:hover { background: rgba(255,255,255,0.05); color: var(--text-primary); }
+        .notif-badge {
+            position: absolute;
+            top: -4px; right: -4px;
+            background: var(--danger);
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 1px 5px;
+            border-radius: 9999px;
+            display: none;
         }
 
-        .health-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            background: var(--success);
-            box-shadow: 0 0 8px var(--success);
-        }
+        /* ===== MAIN LAYOUT ===== */
+        .app-main { padding: 28px 24px; max-width: 1400px; margin: 0 auto; }
 
-        .grid {
-            display: grid;
-            grid-template-columns: 380px 1fr;
-            gap: 28px;
-        }
-
-        @media (max-width: 900px) {
-            .grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
+        /* ===== CARDS ===== */
         .card {
             background: var(--bg-secondary);
             border: 1px solid var(--border-color);
             border-radius: var(--radius);
             padding: 24px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.25);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
         }
+        .card-title { font-size: 16px; font-weight: 600; margin-bottom: 16px; }
+        .card-subtitle { font-size: 13px; color: var(--text-secondary); margin-bottom: 20px; }
 
-        .card-title {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 16px;
-            color: var(--text-primary);
-        }
+        /* ===== GRID ===== */
+        .grid-2 { display: grid; grid-template-columns: 360px 1fr; gap: 24px; }
+        @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
 
-        .form-group {
-            margin-bottom: 16px;
-        }
-
-        label {
-            display: block;
-            font-size: 13px;
-            font-weight: 500;
-            color: var(--text-secondary);
-            margin-bottom: 6px;
-        }
-
-        input[type="text"],
-        input[type="number"],
-        textarea,
-        select {
-            width: 100%;
-            padding: 10px 12px;
-            background: #0f172a;
+        /* ===== FORMS ===== */
+        .form-group { margin-bottom: 14px; }
+        label { display: block; font-size: 12px; font-weight: 500; color: var(--text-secondary); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.4px; }
+        input[type="text"], input[type="password"], input[type="number"], textarea, select {
+            width: 100%; padding: 9px 12px;
+            background: var(--bg-input);
             border: 1px solid var(--border-color);
             border-radius: 6px;
             color: var(--text-primary);
@@ -139,490 +139,1050 @@
             outline: none;
             transition: border-color 0.2s;
         }
+        input:focus, textarea:focus, select:focus { border-color: var(--accent-blue); }
+        .hint { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
 
-        input:focus,
-        textarea:focus,
-        select:focus {
-            border-color: var(--accent-blue);
-        }
+        /* ===== BUTTONS ===== */
+        button { cursor: pointer; border: none; border-radius: 6px; padding: 10px 16px; font-size: 13px; font-weight: 600; transition: all 0.2s; }
+        .btn-primary { background: var(--accent-blue); color: #fff; width: 100%; }
+        .btn-primary:hover { background: var(--accent-blue-hover); transform: translateY(-1px); }
+        .btn-sm { padding: 6px 12px; font-size: 12px; }
+        .btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); }
+        .btn-outline:hover { border-color: var(--text-primary); color: var(--text-primary); }
+        .btn-danger { background: rgba(239,68,68,0.15); color: var(--danger); border: 1px solid rgba(239,68,68,0.4); }
+        .btn-danger:hover { background: var(--danger); color: #fff; }
 
-        .hint {
-            font-size: 11px;
-            color: var(--text-secondary);
-            margin-top: 4px;
-        }
+        .btn-approve { background: rgba(16,185,129,0.15); color: var(--success); border: 1px solid rgba(16,185,129,0.4); }
+        .btn-approve:hover { background: var(--success); color: #fff; }
+        .btn-reject { background: rgba(239,68,68,0.15); color: var(--danger); border: 1px solid rgba(239,68,68,0.4); }
+        .btn-reject:hover { background: var(--danger); color: #fff; }
+        .btn-change { background: rgba(245,158,11,0.15); color: var(--warning); border: 1px solid rgba(245,158,11,0.4); }
+        .btn-change:hover { background: var(--warning); color: #000; }
+        .btn-resubmit { background: rgba(139,92,246,0.15); color: var(--purple); border: 1px solid rgba(139,92,246,0.4); }
+        .btn-resubmit:hover { background: var(--purple); color: #fff; }
 
-        button {
-            cursor: pointer;
-            border: none;
-            border-radius: 6px;
-            padding: 10px 16px;
-            font-size: 14px;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
+        button:disabled { opacity: 0.35; cursor: not-allowed; pointer-events: none; }
 
-        .btn-primary {
-            background: var(--accent-blue);
-            color: #ffffff;
-            width: 100%;
-        }
+        /* ===== FEEDBACK ===== */
+        .feedback-message { margin-top: 12px; padding: 10px 14px; border-radius: 6px; font-size: 13px; display: none; }
+        .feedback-error { display: block; background: rgba(239,68,68,0.1); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+        .feedback-success { display: block; background: rgba(16,185,129,0.1); color: #86efac; border: 1px solid rgba(16,185,129,0.3); }
 
-        .btn-primary:hover {
-            background: var(--accent-blue-hover);
-        }
+        /* ===== STATS ROW (Admin) ===== */
+        .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+        .stat-card { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: var(--radius); padding: 16px 20px; }
+        .stat-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+        .stat-value { font-size: 28px; font-weight: 700; margin-top: 6px; }
+        .stat-pending { color: #93c5fd; }
+        .stat-approved { color: #86efac; }
+        .stat-rejected { color: #fca5a5; }
+        .stat-changes { color: #fcd34d; }
 
-        .btn-sm {
-            padding: 6px 12px;
-            font-size: 12px;
-        }
+        /* ===== TABLE ===== */
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        th { text-align: left; padding: 10px 12px; color: var(--text-secondary); border-bottom: 1px solid var(--border-color); font-weight: 600; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; white-space: nowrap; }
+        td { padding: 12px 12px; border-bottom: 1px solid rgba(51,65,85,0.5); vertical-align: middle; }
+        tr:hover td { background: rgba(255,255,255,0.02); }
 
-        .btn-approve {
-            background: rgba(16, 185, 129, 0.15);
-            color: var(--success);
-            border: 1px solid rgba(16, 185, 129, 0.4);
-        }
+        .action-group { display: flex; gap: 6px; flex-wrap: wrap; }
 
-        .btn-approve:hover {
-            background: var(--success);
-            color: #fff;
-        }
+        /* ===== STATUS BADGES ===== */
+        .status-badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; text-transform: uppercase; white-space: nowrap; }
+        .status-PENDING { background: rgba(59,130,246,0.15); color: #93c5fd; border: 1px solid rgba(59,130,246,0.3); }
+        .status-APPROVED { background: rgba(16,185,129,0.15); color: #86efac; border: 1px solid rgba(16,185,129,0.3); }
+        .status-REJECTED { background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+        .status-CHANGES_REQUESTED { background: rgba(245,158,11,0.15); color: #fcd34d; border: 1px solid rgba(245,158,11,0.3); }
 
-        .btn-reject {
-            background: rgba(239, 68, 68, 0.15);
-            color: var(--danger);
-            border: 1px solid rgba(239, 68, 68, 0.4);
-        }
+        /* ===== FILTER BAR ===== */
+        .filter-bar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+        .filter-btn { padding: 5px 14px; font-size: 12px; border-radius: 9999px; background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); }
+        .filter-btn.active { background: var(--accent-blue); color: #fff; border-color: var(--accent-blue); }
+        .table-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
 
-        .btn-reject:hover {
-            background: var(--danger);
-            color: #fff;
-        }
+        /* ===== MODALS ===== */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.75); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-overlay.open { display: flex; }
+        .modal-content { background: var(--bg-secondary); border: 1px solid var(--border-color); border-radius: 12px; padding: 28px; max-width: 600px; width: 95%; box-shadow: 0 25px 50px rgba(0,0,0,0.5); max-height: 90vh; overflow-y: auto; }
+        .modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; }
+        .modal-title { font-size: 16px; font-weight: 600; }
+        .modal-close { background: transparent; border: none; color: var(--text-secondary); font-size: 20px; cursor: pointer; padding: 0; line-height: 1; }
+        .modal-close:hover { color: var(--text-primary); }
+        .modal-footer { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
 
-        .btn-change {
-            background: rgba(245, 158, 11, 0.15);
-            color: var(--warning);
-            border: 1px solid rgba(245, 158, 11, 0.4);
-        }
+        /* ===== DETAIL GRID ===== */
+        .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+        .detail-item label { margin-bottom: 2px; }
+        .detail-value { font-size: 14px; color: var(--text-primary); font-weight: 500; }
+        .detail-value.mono { font-family: monospace; font-size: 12px; color: var(--text-secondary); }
 
-        .btn-change:hover {
-            background: var(--warning);
-            color: #000;
-        }
+        /* ===== FILE PREVIEW ===== */
+        .file-preview { margin: 12px 0; }
+        .file-preview img { max-width: 100%; max-height: 250px; border-radius: 8px; border: 1px solid var(--border-color); object-fit: contain; display: block; }
+        .pdf-preview-frame { width: 100%; height: 250px; border: 1px solid var(--border-color); border-radius: 8px; }
 
-        .feedback-message {
-            margin-top: 14px;
-            padding: 10px 14px;
-            border-radius: 6px;
-            font-size: 13px;
-            display: none;
-        }
+        /* ===== AUDIT TIMELINE ===== */
+        .timeline { position: relative; padding-left: 20px; }
+        .timeline::before { content: ''; position: absolute; left: 6px; top: 4px; bottom: 4px; width: 2px; background: var(--border-color); }
+        .timeline-item { position: relative; margin-bottom: 16px; }
+        .timeline-dot { position: absolute; left: -17px; top: 4px; width: 10px; height: 10px; border-radius: 50%; background: var(--accent-blue); border: 2px solid var(--bg-secondary); }
+        .timeline-dot.dot-APPROVED { background: var(--success); }
+        .timeline-dot.dot-REJECTED { background: var(--danger); }
+        .timeline-dot.dot-CHANGES_REQUESTED { background: var(--warning); }
+        .timeline-dot.dot-SUBMITTED { background: var(--accent-blue); }
+        .timeline-dot.dot-RESUBMITTED { background: var(--purple); }
+        .timeline-date { font-size: 11px; color: var(--text-secondary); margin-bottom: 2px; }
+        .timeline-label { font-size: 13px; font-weight: 600; }
+        .timeline-comment { font-size: 12px; color: var(--text-secondary); margin-top: 3px; font-style: italic; }
 
-        .feedback-error {
-            display: block;
-            background: rgba(239, 68, 68, 0.15);
-            color: #fca5a5;
-            border: 1px solid rgba(239, 68, 68, 0.3);
-        }
-
-        .feedback-success {
-            display: block;
-            background: rgba(16, 185, 129, 0.15);
-            color: #86efac;
-            border: 1px solid rgba(16, 185, 129, 0.3);
-        }
-
-        .table-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 13px;
-        }
-
-        th {
-            text-align: left;
-            padding: 12px 10px;
-            color: var(--text-secondary);
-            border-bottom: 1px solid var(--border-color);
-            font-weight: 600;
-            text-transform: uppercase;
-            font-size: 11px;
-            letter-spacing: 0.5px;
-        }
-
-        td {
-            padding: 12px 10px;
-            border-bottom: 1px solid rgba(51, 65, 85, 0.5);
-            vertical-align: middle;
-        }
-
-        .status-badge {
-            display: inline-block;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: 700;
-            text-transform: uppercase;
-        }
-
-        .status-PENDING {
-            background: rgba(59, 130, 246, 0.15);
-            color: #93c5fd;
-            border: 1px solid rgba(59, 130, 246, 0.3);
-        }
-
-        .status-APPROVED {
-            background: rgba(16, 185, 129, 0.15);
-            color: #86efac;
-            border: 1px solid rgba(16, 185, 129, 0.3);
-        }
-
-        .status-REJECTED {
-            background: rgba(239, 68, 68, 0.15);
-            color: #fca5a5;
-            border: 1px solid rgba(239, 68, 68, 0.3);
-        }
-
-        .status-CHANGES_REQUESTED {
-            background: rgba(245, 158, 11, 0.15);
-            color: #fcd34d;
-            border: 1px solid rgba(245, 158, 11, 0.3);
-        }
-
-        .action-group {
-            display: flex;
-            gap: 6px;
-        }
-
-        /* Modal Dialog */
-        .modal-overlay {
+        /* ===== NOTIFICATION PANEL ===== */
+        .notif-panel {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background: rgba(0, 0, 0, 0.7);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-        }
-
-        .modal-content {
+            top: 64px; right: 16px;
+            width: 340px;
             background: var(--bg-secondary);
             border: 1px solid var(--border-color);
             border-radius: var(--radius);
-            padding: 24px;
-            max-width: 480px;
-            width: 90%;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            z-index: 500;
+            display: none;
         }
+        .notif-panel.open { display: block; }
+        .notif-panel-header { padding: 12px 16px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; }
+        .notif-panel-title { font-size: 14px; font-weight: 600; }
+        .notif-list { max-height: 360px; overflow-y: auto; }
+        .notif-item { padding: 12px 16px; border-bottom: 1px solid rgba(51,65,85,0.4); }
+        .notif-item.unread { background: rgba(59,130,246,0.05); }
+        .notif-msg { font-size: 13px; }
+        .notif-time { font-size: 11px; color: var(--text-secondary); margin-top: 3px; }
+        .notif-empty { padding: 20px 16px; text-align: center; color: var(--text-secondary); font-size: 13px; }
+
+        /* ===== FEEDBACK COMMENT BOX ===== */
+        .feedback-box { background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.25); border-radius: 6px; padding: 12px; margin-top: 8px; }
+        .feedback-box-label { font-size: 11px; text-transform: uppercase; font-weight: 700; color: var(--warning); letter-spacing: 0.5px; margin-bottom: 4px; }
+        .feedback-box-text { font-size: 13px; color: var(--text-primary); }
+
+        /* ===== SECTION SPACING ===== */
+        .section-gap { margin-bottom: 24px; }
+        .divider { border-top: 1px solid var(--border-color); margin: 20px 0; }
+
+        .empty-row td { text-align: center; color: var(--text-secondary); padding: 32px; }
+
+        /* ===== RESUBMIT/DETAILS PANEL ===== */
+        .inline-history { margin-top: 12px; }
+
+        /* ===== LOGOUT ===== */
+        .btn-logout { background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); font-size: 12px; padding: 5px 12px; }
+        .btn-logout:hover { background: var(--danger); border-color: var(--danger); color: #fff; }
     </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <div class="logo-area">
-                <h1>Digital Asset Approval Portal <span class="badge-system">v1.0.0</span></h1>
+
+<!-- ======================== LOGIN SCREEN ======================== -->
+<div id="login-screen" class="screen active">
+    <div class="login-card">
+        <div class="login-logo">
+            <div class="login-icon">🔐</div>
+            <h1>Digital Asset Approval Platform</h1>
+            <p>Sign in to access your dashboard</p>
+        </div>
+        <form id="login-form" onsubmit="handleLogin(event)">
+            <div class="form-group">
+                <label for="login-username">Username</label>
+                <input type="text" id="login-username" name="username" placeholder="user or admin" required autocomplete="username">
             </div>
+            <div class="form-group">
+                <label for="login-password">Password</label>
+                <input type="password" id="login-password" name="password" placeholder="••••••••" required autocomplete="current-password">
+            </div>
+            <button type="submit" class="btn-primary" id="login-btn">Sign In</button>
+            <div id="login-feedback" class="feedback-message"></div>
+        </form>
+        <div style="margin-top:20px; padding:14px; background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.2); border-radius:6px; font-size:12px; color:var(--text-secondary);">
+            <strong style="color:var(--text-primary);">Demo Accounts</strong><br>
+            USER: <code>user</code> / <code>user123</code><br>
+            ADMIN: <code>admin</code> / <code>admin123</code>
+        </div>
+    </div>
+</div>
+
+<!-- ======================== USER DASHBOARD ======================== -->
+<div id="user-screen" class="screen">
+    <header class="app-header">
+        <div class="header-left">
+            <span class="app-logo">📦 Digital Asset Approval</span>
             <div class="health-indicator">
                 <div class="health-dot" id="health-dot"></div>
                 <span id="health-status">System Online</span>
             </div>
-        </header>
+        </div>
+        <div class="header-right">
+            <button class="notif-btn" id="user-notif-btn" onclick="toggleNotifPanel('user')" title="Notifications">
+                🔔<span class="notif-badge" id="user-notif-badge">0</span>
+            </button>
+            <span class="role-badge role-USER">USER</span>
+            <span class="user-info" id="user-display-name"></span>
+            <button class="btn-sm btn-logout" onclick="handleLogout()">Logout</button>
+        </div>
+    </header>
 
-        <div class="grid">
-            <!-- Asset Submission Form -->
-            <div class="card">
-                <h2 class="card-title">Submit Asset for Approval</h2>
+    <!-- Notification Panel (user) -->
+    <div id="user-notif-panel" class="notif-panel">
+        <div class="notif-panel-header">
+            <span class="notif-panel-title">Notifications</span>
+            <button class="btn-sm btn-outline" onclick="markAllRead('user')" style="padding:3px 8px;font-size:11px;">Mark all read</button>
+        </div>
+        <div class="notif-list" id="user-notif-list"></div>
+    </div>
+
+    <main class="app-main">
+        <div class="grid-2">
+            <!-- Submit Form -->
+            <div class="card section-gap">
+                <h2 class="card-title">📤 Submit New Asset</h2>
                 <form id="asset-form" onsubmit="handleAssetSubmit(event)">
                     <div class="form-group">
                         <label for="title">Asset Title *</label>
                         <input type="text" id="title" name="title" placeholder="e.g. Q3 Brand Campaign Banner" required maxlength="100">
                         <div class="hint">Max 100 characters.</div>
                     </div>
-
                     <div class="form-group">
                         <label for="description">Description</label>
                         <textarea id="description" name="description" rows="3" placeholder="Provide background or specifications..."></textarea>
                     </div>
-
                     <div class="form-group">
                         <label for="file">Asset File *</label>
                         <input type="file" id="file" name="file" accept=".jpg,.jpeg,.png,.pdf,.docx" required>
-                        <div class="hint">Allowed types: jpg, png, pdf, docx (Max 10 MB)</div>
+                        <div class="hint">Allowed: JPG, JPEG, PNG, PDF, DOCX — Max 10 MB</div>
                     </div>
-
                     <div class="form-group">
-                        <label for="requesterId">Requester ID *</label>
-                        <input type="text" id="requesterId" name="requesterId" value="marketing-team-1" required>
+                        <label for="requesterId">Requester ID</label>
+                        <input type="text" id="requesterId" name="requesterId" readonly style="opacity:0.6; cursor:not-allowed;">
+                        <div class="hint">Automatically set to your logged-in username.</div>
                     </div>
-
                     <button type="submit" class="btn-primary" id="submit-btn">Submit Asset</button>
-
                     <div id="form-feedback" class="feedback-message"></div>
                 </form>
             </div>
 
-            <!-- Approval Queue & Reviewer Dashboard -->
+            <!-- My Submissions -->
             <div class="card">
                 <div class="table-controls">
-                    <h2 class="card-title" style="margin-bottom:0;">Approval Queue</h2>
-                    <button class="btn-sm" style="background:var(--border-color); color:#fff;" id="refresh-btn" onclick="fetchRequests()">Refresh Queue</button>
+                    <h2 class="card-title" style="margin-bottom:0;">📋 My Submissions</h2>
+                    <button class="btn-sm btn-outline" onclick="loadUserDashboard()">↻ Refresh</button>
                 </div>
-
-                <div style="overflow-x: auto;">
-                    <table id="requests-table">
+                <div class="table-wrapper">
+                    <table>
                         <thead>
                             <tr>
                                 <th>Title</th>
                                 <th>File</th>
-                                <th>Requester</th>
                                 <th>Status</th>
-                                <th>Actions</th>
+                                <th>Feedback</th>
+                                <th>Action</th>
                             </tr>
                         </thead>
                         <tbody id="requests-tbody">
-                            <!-- Injected dynamically -->
+                            <tr class="empty-row"><td colspan="5">Loading your submissions...</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
+    </main>
+</div>
+
+<!-- ======================== ADMIN DASHBOARD ======================== -->
+<div id="admin-screen" class="screen">
+    <header class="app-header">
+        <div class="header-left">
+            <span class="app-logo">🛡️ Digital Asset Approval</span>
+            <div class="health-indicator">
+                <div class="health-dot" id="admin-health-dot"></div>
+                <span id="admin-health-status">System Online</span>
+            </div>
+        </div>
+        <div class="header-right">
+            <button class="notif-btn" id="admin-notif-btn" onclick="toggleNotifPanel('admin')" title="Notifications">
+                🔔<span class="notif-badge" id="admin-notif-badge">0</span>
+            </button>
+            <span class="role-badge role-ADMIN">ADMIN</span>
+            <span class="user-info" id="admin-display-name"></span>
+            <button class="btn-sm btn-logout" onclick="handleLogout()">Logout</button>
+        </div>
+    </header>
+
+    <!-- Notification Panel (admin) -->
+    <div id="admin-notif-panel" class="notif-panel">
+        <div class="notif-panel-header">
+            <span class="notif-panel-title">Notifications</span>
+            <button class="btn-sm btn-outline" onclick="markAllRead('admin')" style="padding:3px 8px;font-size:11px;">Mark all read</button>
+        </div>
+        <div class="notif-list" id="admin-notif-list"></div>
     </div>
 
-    <!-- Review Modal Dialog -->
-    <div id="review-modal" class="modal-overlay">
-        <div class="modal-content">
-            <h3 class="card-title" id="modal-title">Review Asset</h3>
-            <input type="hidden" id="modal-request-id">
-            <input type="hidden" id="modal-action">
-            
-            <div class="form-group">
-                <label for="reviewerId">Reviewer ID *</label>
-                <input type="text" id="reviewerId" value="lead-reviewer-1">
-            </div>
+    <main class="app-main">
+        <!-- Stats -->
+        <div class="stats-row" id="admin-stats-row">
+            <div class="stat-card"><div class="stat-label">Pending</div><div class="stat-value stat-pending" id="stat-pending">0</div></div>
+            <div class="stat-card"><div class="stat-label">Approved</div><div class="stat-value stat-approved" id="stat-approved">0</div></div>
+            <div class="stat-card"><div class="stat-label">Rejected</div><div class="stat-value stat-rejected" id="stat-rejected">0</div></div>
+            <div class="stat-card"><div class="stat-label">Changes Requested</div><div class="stat-value stat-changes" id="stat-changes">0</div></div>
+        </div>
 
-            <div class="form-group">
-                <label for="reviewComment">Review Comment *</label>
-                <textarea id="reviewComment" rows="3" placeholder="Provide feedback or rationale..."></textarea>
+        <!-- Queue -->
+        <div class="card">
+            <div class="table-controls">
+                <h2 class="card-title" style="margin-bottom:0;">📥 Approval Queue</h2>
+                <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+                    <div class="filter-bar" id="admin-filter-bar">
+                        <button class="filter-btn active" onclick="setAdminFilter('ALL', this)">All</button>
+                        <button class="filter-btn" onclick="setAdminFilter('PENDING', this)">Pending</button>
+                        <button class="filter-btn" onclick="setAdminFilter('APPROVED', this)">Approved</button>
+                        <button class="filter-btn" onclick="setAdminFilter('REJECTED', this)">Rejected</button>
+                        <button class="filter-btn" onclick="setAdminFilter('CHANGES_REQUESTED', this)">Changes</button>
+                    </div>
+                    <button class="btn-sm btn-outline" onclick="loadAdminDashboard()">↻ Refresh</button>
+                </div>
             </div>
+            <div class="table-wrapper">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Title</th>
+                            <th>File</th>
+                            <th>Requester</th>
+                            <th>Submitted</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="admin-requests-tbody">
+                        <tr class="empty-row"><td colspan="6">Loading requests...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+</div>
 
-            <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
-                <button type="button" class="btn-sm" style="background: var(--border-color); color: #fff;" onclick="closeModal()">Cancel</button>
-                <button type="button" class="btn-sm btn-primary" id="confirm-review-btn" onclick="submitReviewAction()">Confirm Decision</button>
+<!-- ======================== REVIEW MODAL ======================== -->
+<div id="review-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title" id="modal-title">Review Asset</h3>
+            <button class="modal-close" onclick="closeModal('review-modal')">✕</button>
+        </div>
+        <input type="hidden" id="modal-request-id">
+        <input type="hidden" id="modal-action">
+
+        <!-- Asset Details -->
+        <div class="detail-grid" id="modal-detail-grid"></div>
+
+        <!-- File Preview -->
+        <div class="file-preview" id="modal-file-preview"></div>
+
+        <div style="margin-bottom:12px;">
+            <a id="modal-download-link" href="#" target="_blank" style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;font-size:13px;background:rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(59,130,246,0.3);padding:6px 14px;border-radius:6px;font-weight:500;">
+                ⬇ View / Download Asset
+            </a>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Review History -->
+        <div id="modal-history-section">
+            <h4 style="font-size:13px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">Review History</h4>
+            <div class="timeline" id="modal-timeline"></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Review Form -->
+        <div id="modal-review-form-section">
+            <h4 style="font-size:13px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">Add Review Decision</h4>
+            <div class="form-group">
+                <label for="reviewComment">Comment / Feedback *</label>
+                <textarea id="reviewComment" rows="3" placeholder="Provide detailed feedback or reason for decision..."></textarea>
             </div>
-            <div id="modal-feedback" class="feedback-message"></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button type="button" class="btn-sm btn-approve" id="modal-btn-approve" onclick="submitReviewAction('APPROVED')">✓ Approve</button>
+                <button type="button" class="btn-sm btn-reject" id="modal-btn-reject" onclick="submitReviewAction('REJECTED')">✗ Reject</button>
+                <button type="button" class="btn-sm btn-change" id="modal-btn-change" onclick="submitReviewAction('CHANGES_REQUESTED')">↻ Request Changes</button>
+            </div>
+        </div>
+
+        <div id="modal-feedback" class="feedback-message"></div>
+
+        <!-- Hidden confirm button kept for Selenium backward compatibility -->
+        <button type="button" id="confirm-review-btn" style="display:none;" onclick="submitReviewAction(document.getElementById('modal-action').value)">Confirm Decision</button>
+    </div>
+</div>
+
+<!-- ======================== RESUBMIT MODAL ======================== -->
+<div id="resubmit-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">↻ Resubmit Revised Asset</h3>
+            <button class="modal-close" onclick="closeModal('resubmit-modal')">✕</button>
+        </div>
+        <input type="hidden" id="resubmit-request-id">
+        <div id="resubmit-admin-comment" class="feedback-box" style="margin-bottom:16px;"></div>
+        <div class="form-group">
+            <label for="resubmit-file">Upload Revised File *</label>
+            <input type="file" id="resubmit-file" accept=".jpg,.jpeg,.png,.pdf,.docx" required>
+            <div class="hint">Allowed: JPG, JPEG, PNG, PDF, DOCX — Max 10 MB</div>
+        </div>
+        <div class="form-group">
+            <label for="resubmit-description">Updated Description (optional)</label>
+            <textarea id="resubmit-description" rows="2" placeholder="Describe what changed..."></textarea>
+        </div>
+        <div id="resubmit-feedback" class="feedback-message"></div>
+        <div class="modal-footer">
+            <button type="button" class="btn-sm btn-outline" onclick="closeModal('resubmit-modal')">Cancel</button>
+            <button type="button" class="btn-sm btn-resubmit" onclick="submitResubmit()">Submit Revised Asset</button>
         </div>
     </div>
+</div>
 
-    <script>
-        const API_BASE = window.location.pathname.replace(/\/+$/, '') + '/api';
+<!-- ======================== HISTORY MODAL (User) ======================== -->
+<div id="history-modal" class="modal-overlay">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 class="modal-title">📋 Request History</h3>
+            <button class="modal-close" onclick="closeModal('history-modal')">✕</button>
+        </div>
+        <div class="detail-grid" id="history-detail-grid"></div>
+        <div class="divider"></div>
+        <h4 style="font-size:13px;font-weight:600;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:12px;">Timeline</h4>
+        <div class="timeline" id="history-timeline"></div>
+    </div>
+</div>
 
-        async function checkHealth() {
-            try {
-                const res = await fetch(`${API_BASE}/health`);
-                if (res.ok) {
-                    const text = await res.text();
-                    document.getElementById('health-status').textContent = text;
-                    document.getElementById('health-dot').style.background = 'var(--success)';
-                } else {
-                    document.getElementById('health-status').textContent = 'Degraded';
-                    document.getElementById('health-dot').style.background = 'var(--danger)';
-                }
-            } catch (err) {
-                document.getElementById('health-status').textContent = 'Offline';
-                document.getElementById('health-dot').style.background = 'var(--danger)';
+<script>
+    // ================================================================
+    // STATE
+    // ================================================================
+    const API_BASE = window.location.pathname.replace(/\/index\.html?$/i, '').replace(/\/+$/, '') + '/api';
+    let authToken = null;
+    let currentUser = null;
+    let allAdminRequests = [];
+    let adminFilter = 'ALL';
+    let notifPanelOpen = null; // 'user' or 'admin'
+
+    // ================================================================
+    // UTILITY
+    // ================================================================
+    function escapeHtml(str) {
+        if (!str && str !== 0) return '—';
+        return String(str).replace(/[&<>'"]/g,
+            t => ({ '&':'&amp;','<':'&lt;','>':'&gt;',"'":"&#39;",'"':'&quot;'}[t] || t));
+    }
+
+    function formatDate(isoStr) {
+        if (!isoStr) return '—';
+        try {
+            const d = new Date(isoStr);
+            return d.toLocaleString('en-GB', { day:'2-digit', month:'short', year:'numeric', hour:'2-digit', minute:'2-digit' });
+        } catch(e) { return isoStr; }
+    }
+
+    function formatBytes(bytes) {
+        if (!bytes) return '—';
+        if (bytes < 1024) return bytes + ' B';
+        if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+        return (bytes/(1024*1024)).toFixed(2) + ' MB';
+    }
+
+    function showFeedback(elId, msg, isError) {
+        const el = document.getElementById(elId);
+        if (!el) return;
+        el.className = 'feedback-message ' + (isError ? 'feedback-error' : 'feedback-success');
+        el.textContent = msg;
+        el.style.display = 'block';
+    }
+
+    function hideFeedback(elId) {
+        const el = document.getElementById(elId);
+        if (el) { el.style.display = 'none'; el.className = 'feedback-message'; }
+    }
+
+    function authHeaders() {
+        return { 'X-Auth-Token': authToken || '' };
+    }
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        const s = document.getElementById(id);
+        if (s) s.classList.add('active');
+    }
+
+    function closeModal(id) {
+        document.getElementById(id).classList.remove('open');
+    }
+
+    function openModal(id) {
+        document.getElementById(id).classList.add('open');
+    }
+
+    // ================================================================
+    // HEALTH CHECK
+    // ================================================================
+    async function checkHealth() {
+        try {
+            const res = await fetch(`${API_BASE}/health`);
+            const dotIds = ['health-dot','admin-health-dot'];
+            const statusIds = ['health-status','admin-health-status'];
+            if (res.ok) {
+                const text = await res.text();
+                dotIds.forEach(id => { const el=document.getElementById(id); if(el) el.style.background='var(--success)'; });
+                statusIds.forEach(id => { const el=document.getElementById(id); if(el) el.textContent=text; });
+            } else {
+                dotIds.forEach(id => { const el=document.getElementById(id); if(el) el.style.background='var(--danger)'; });
+                statusIds.forEach(id => { const el=document.getElementById(id); if(el) el.textContent='Degraded'; });
             }
+        } catch(e) {
+            ['health-dot','admin-health-dot'].forEach(id => { const el=document.getElementById(id); if(el) el.style.background='var(--danger)'; });
+            ['health-status','admin-health-status'].forEach(id => { const el=document.getElementById(id); if(el) el.textContent='Offline'; });
         }
+    }
 
-        async function fetchRequests() {
-            try {
-                const res = await fetch(`${API_BASE}/requests`);
-                if (res.ok) {
-                    const data = await res.json();
-                    renderRequests(data);
-                }
-            } catch (err) {
-                console.error("Failed to load requests", err);
-            }
-        }
+    // ================================================================
+    // LOGIN
+    // ================================================================
+    async function handleLogin(e) {
+        e.preventDefault();
+        hideFeedback('login-feedback');
+        const username = document.getElementById('login-username').value.trim();
+        const password = document.getElementById('login-password').value;
+        const btn = document.getElementById('login-btn');
+        btn.textContent = 'Signing in...'; btn.disabled = true;
 
-        function renderRequests(requests) {
-            const tbody = document.getElementById('requests-tbody');
-            tbody.innerHTML = '';
-            
-            if (requests.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-secondary); padding:24px;">No requests in queue. Submit an asset to get started.</td></tr>`;
-                return;
-            }
-
-            requests.forEach(req => {
-                const tr = document.createElement('tr');
-                tr.setAttribute('data-request-id', req.id);
-                tr.innerHTML = `
-                    <td>
-                        <strong class="req-title">${escapeHtml(req.title)}</strong><br>
-                        <small style="color:var(--text-secondary);">${escapeHtml(req.description || '')}</small>
-                    </td>
-                    <td><code>${escapeHtml(req.fileUrl || '')}</code></td>
-                    <td>${escapeHtml(req.requesterId)}</td>
-                    <td><span class="status-badge status-${req.status}" id="status-${req.id}">${req.status}</span></td>
-                    <td>
-                        <div class="action-group">
-                            <button class="btn-sm btn-approve" onclick="openReviewModal('${req.id}', 'APPROVED')">Approve</button>
-                            <button class="btn-sm btn-reject" onclick="openReviewModal('${req.id}', 'REJECTED')">Reject</button>
-                            <button class="btn-sm btn-change" onclick="openReviewModal('${req.id}', 'CHANGES_REQUESTED')">Revise</button>
-                        </div>
-                    </td>
-                `;
-                tbody.appendChild(tr);
+        try {
+            const res = await fetch(`${API_BASE}/auth/login`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
             });
-        }
-
-        async function handleAssetSubmit(e) {
-            e.preventDefault();
-            const feedback = document.getElementById('form-feedback');
-            feedback.className = 'feedback-message';
-            feedback.style.display = 'none';
-
-            const title = document.getElementById('title').value;
-            const description = document.getElementById('description').value;
-            const requesterId = document.getElementById('requesterId').value;
-            const fileInput = document.getElementById('file');
-            const file = fileInput.files ? fileInput.files[0] : null;
-
-            if (!file) {
-                feedback.className = 'feedback-message feedback-error';
-                feedback.textContent = 'Please select a file';
-                feedback.style.display = 'block';
-                return;
-            }
-
-            const allowedExtensions = ['jpg', 'png', 'pdf', 'docx'];
-            const fileName = file.name || '';
-            const ext = fileName.includes('.') ? fileName.split('.').pop().toLowerCase() : '';
-            if (!allowedExtensions.includes(ext)) {
-                feedback.className = 'feedback-message feedback-error';
-                feedback.textContent = 'Error: Unsupported file type';
-                feedback.style.display = 'block';
-                return;
-            }
-
-            const MAX_SIZE = 10 * 1024 * 1024; // 10MB
-            if (file.size > MAX_SIZE) {
-                feedback.className = 'feedback-message feedback-error';
-                feedback.textContent = 'Error: File size exceeds 10MB limit';
-                feedback.style.display = 'block';
-                return;
-            }
-
-            const formData = new FormData();
-            formData.append('title', title);
-            if (description) {
-                formData.append('description', description);
-            }
-            formData.append('requesterId', requesterId);
-            formData.append('file', file);
-
-            try {
-                const res = await fetch(`${API_BASE}/requests`, {
-                    method: 'POST',
-                    body: formData
-                });
-
-                if (res.ok) {
-                    const result = await res.json();
-                    feedback.className = 'feedback-message feedback-success';
-                    feedback.textContent = `Asset "${result.title}" submitted successfully! ID: ${result.id}`;
-                    feedback.style.display = 'block';
-                    document.getElementById('title').value = '';
-                    document.getElementById('description').value = '';
-                    fileInput.value = '';
-                    fetchRequests();
+            const data = await res.json();
+            if (res.ok) {
+                authToken = data.token;
+                currentUser = data;
+                if (data.role === 'ADMIN') {
+                    document.getElementById('admin-display-name').textContent = data.fullName || data.username;
+                    showScreen('admin-screen');
+                    loadAdminDashboard();
                 } else {
-                    const errText = await res.text();
-                    feedback.className = 'feedback-message feedback-error';
-                    feedback.textContent = `Error: ${errText}`;
-                    feedback.style.display = 'block';
+                    document.getElementById('user-display-name').textContent = data.fullName || data.username;
+                    document.getElementById('requesterId').value = data.username;
+                    showScreen('user-screen');
+                    loadUserDashboard();
                 }
-            } catch (err) {
-                feedback.className = 'feedback-message feedback-error';
-                feedback.textContent = `Network error: ${err.message}`;
-                feedback.style.display = 'block';
+                checkHealth();
+                startNotifPolling();
+            } else {
+                showFeedback('login-feedback', data.error || 'Login failed', true);
             }
+        } catch(err) {
+            showFeedback('login-feedback', 'Network error: ' + err.message, true);
+        } finally {
+            btn.textContent = 'Sign In'; btn.disabled = false;
         }
+    }
 
-        function openReviewModal(requestId, action) {
-            document.getElementById('modal-request-id').value = requestId;
-            document.getElementById('modal-action').value = action;
-            document.getElementById('modal-title').textContent = `Action: ${action.replace('_', ' ')}`;
-            document.getElementById('reviewComment').value = '';
-            document.getElementById('modal-feedback').style.display = 'none';
-            document.getElementById('review-modal').style.display = 'flex';
-        }
+    async function handleLogout() {
+        try {
+            await fetch(`${API_BASE}/auth/logout`, { method: 'POST', headers: authHeaders() });
+        } catch(e) {}
+        authToken = null; currentUser = null;
+        showScreen('login-screen');
+        document.getElementById('login-form').reset();
+        stopNotifPolling();
+    }
 
-        function closeModal() {
-            document.getElementById('review-modal').style.display = 'none';
-        }
+    // ================================================================
+    // NOTIFICATIONS
+    // ================================================================
+    let notifInterval = null;
 
-        async function submitReviewAction() {
-            const requestId = document.getElementById('modal-request-id').value;
-            const action = document.getElementById('modal-action').value;
-            const reviewerId = document.getElementById('reviewerId').value;
-            const comment = document.getElementById('reviewComment').value || 'Decision executed';
-            const feedback = document.getElementById('modal-feedback');
+    function startNotifPolling() {
+        loadNotifications();
+        notifInterval = setInterval(loadNotifications, 15000);
+    }
 
-            const params = new URLSearchParams();
-            params.append('reviewerId', reviewerId);
-            params.append('action', action);
-            params.append('comment', comment);
+    function stopNotifPolling() {
+        if (notifInterval) clearInterval(notifInterval);
+    }
 
-            try {
-                const res = await fetch(`${API_BASE}/requests/${requestId}/review?${params.toString()}`, {
-                    method: 'PUT'
-                });
+    async function loadNotifications() {
+        if (!authToken) return;
+        try {
+            const res = await fetch(`${API_BASE}/requests/notifications`, { headers: authHeaders() });
+            if (!res.ok) return;
+            const data = await res.json();
+            const notifs = data.notifications || [];
+            const unread = data.unreadCount || 0;
 
-                if (res.ok) {
-                    closeModal();
-                    fetchRequests();
-                } else {
-                    const err = await res.text();
-                    feedback.className = 'feedback-message feedback-error';
-                    feedback.textContent = err;
-                    feedback.style.display = 'block';
-                }
-            } catch (err) {
-                feedback.className = 'feedback-message feedback-error';
-                feedback.textContent = err.message;
-                feedback.style.display = 'block';
+            const prefix = currentUser && currentUser.role === 'ADMIN' ? 'admin' : 'user';
+            const badgeEl = document.getElementById(prefix + '-notif-badge');
+            if (badgeEl) {
+                badgeEl.textContent = unread;
+                badgeEl.style.display = unread > 0 ? 'block' : 'none';
             }
+
+            renderNotifList(prefix + '-notif-list', notifs);
+        } catch(e) {}
+    }
+
+    function renderNotifList(listId, notifs) {
+        const el = document.getElementById(listId);
+        if (!el) return;
+        if (!notifs.length) {
+            el.innerHTML = '<div class="notif-empty">No notifications</div>';
+            return;
+        }
+        el.innerHTML = notifs.map(n => `
+            <div class="notif-item ${n.read ? '' : 'unread'}">
+                <div class="notif-msg">${escapeHtml(n.message)}</div>
+                <div class="notif-time">${formatDate(n.timestamp)}</div>
+            </div>
+        `).join('');
+    }
+
+    function toggleNotifPanel(role) {
+        const panelId = role + '-notif-panel';
+        const panel = document.getElementById(panelId);
+        const isOpen = panel.classList.contains('open');
+        // Close all panels first
+        document.querySelectorAll('.notif-panel').forEach(p => p.classList.remove('open'));
+        if (!isOpen) {
+            panel.classList.add('open');
+            notifPanelOpen = role;
+        } else {
+            notifPanelOpen = null;
+        }
+    }
+
+    async function markAllRead(role) {
+        if (!authToken) return;
+        try {
+            await fetch(`${API_BASE}/requests/notifications/read`, { method: 'POST', headers: authHeaders() });
+            loadNotifications();
+        } catch(e) {}
+    }
+
+    // Close notif panel on outside click
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.notif-panel') && !e.target.closest('.notif-btn')) {
+            document.querySelectorAll('.notif-panel').forEach(p => p.classList.remove('open'));
+        }
+    });
+
+    // ================================================================
+    // USER DASHBOARD
+    // ================================================================
+    async function loadUserDashboard() {
+        if (!authToken) return;
+        try {
+            const res = await fetch(`${API_BASE}/requests/my`, { headers: authHeaders() });
+            if (res.status === 401) { handleLogout(); return; }
+            const requests = await res.json();
+            renderUserTable(requests);
+        } catch(e) { console.error('Failed to load user requests', e); }
+    }
+
+    function renderUserTable(requests) {
+        const tbody = document.getElementById('requests-tbody');
+        if (!requests.length) {
+            tbody.innerHTML = '<tr class="empty-row"><td colspan="5">No submissions yet. Submit your first asset →</td></tr>';
+            return;
+        }
+        tbody.innerHTML = requests.map(req => {
+            const canResubmit = req.status === 'CHANGES_REQUESTED';
+            const feedback = req.latestComment
+                ? `<span style="font-size:12px;color:var(--warning);">${escapeHtml(req.latestComment)}</span>`
+                : '<span style="color:var(--text-secondary);font-size:12px;">—</span>';
+            return `<tr data-request-id="${escapeHtml(req.id)}">
+                <td>
+                    <strong>${escapeHtml(req.title)}</strong>
+                    ${req.resubmissionCount > 0 ? `<span style="font-size:10px;color:var(--purple);margin-left:6px;">v${req.resubmissionCount+1}</span>` : ''}
+                </td>
+                <td><span style="font-size:12px;color:var(--text-secondary);">${escapeHtml(req.originalFileName || req.fileUrl)}</span></td>
+                <td><span class="status-badge status-${escapeHtml(req.status)}" id="status-${escapeHtml(req.id)}">${escapeHtml(req.status)}</span></td>
+                <td>${feedback}</td>
+                <td>
+                    <div class="action-group">
+                        <button class="btn-sm btn-outline" onclick="viewUserHistory('${escapeHtml(req.id)}')">History</button>
+                        ${canResubmit ? `<button class="btn-sm btn-resubmit" onclick="openResubmitModal('${escapeHtml(req.id)}', '${escapeHtml(req.latestComment || '')}')">Resubmit</button>` : ''}
+                    </div>
+                </td>
+            </tr>`;
+        }).join('');
+    }
+
+    // ================================================================
+    // ASSET SUBMISSION (USER)
+    // ================================================================
+    async function handleAssetSubmit(e) {
+        e.preventDefault();
+        hideFeedback('form-feedback');
+
+        const title = document.getElementById('title').value;
+        const description = document.getElementById('description').value;
+        const requesterId = document.getElementById('requesterId').value;
+        const fileInput = document.getElementById('file');
+        const file = fileInput.files ? fileInput.files[0] : null;
+
+        if (!file) { showFeedback('form-feedback', 'Please select a file', true); return; }
+
+        const allowedExtensions = ['jpg','jpeg','png','pdf','docx'];
+        const ext = (file.name || '').split('.').pop().toLowerCase();
+        if (!allowedExtensions.includes(ext)) {
+            showFeedback('form-feedback', 'Error: Unsupported file type', true); return;
         }
 
-        function escapeHtml(str) {
-            if (!str) return '';
-            return str.replace(/[&<>'"]/g, 
-                tag => ({
-                    '&': '&amp;',
-                    '<': '&lt;',
-                    '>': '&gt;',
-                    "'": '&#39;',
-                    '"': '&quot;'
-                }[tag] || tag)
-            );
+        if (file.size > 10 * 1024 * 1024) {
+            showFeedback('form-feedback', 'Error: File size exceeds 10MB limit', true); return;
         }
 
-        // Initialize on load
-        window.addEventListener('DOMContentLoaded', () => {
-            checkHealth();
-            fetchRequests();
-        });
-    </script>
+        const formData = new FormData();
+        formData.append('title', title);
+        if (description) formData.append('description', description);
+        formData.append('requesterId', requesterId || (currentUser && currentUser.username) || 'user');
+        formData.append('file', file);
+
+        const btn = document.getElementById('submit-btn');
+        btn.textContent = 'Submitting...'; btn.disabled = true;
+
+        try {
+            const res = await fetch(`${API_BASE}/requests`, {
+                method: 'POST',
+                headers: authHeaders(),
+                body: formData
+            });
+            if (res.ok) {
+                const result = await res.json();
+                showFeedback('form-feedback', `Asset "${result.title}" submitted successfully! ID: ${result.id}`, false);
+                document.getElementById('title').value = '';
+                document.getElementById('description').value = '';
+                fileInput.value = '';
+                loadUserDashboard();
+                loadNotifications();
+            } else {
+                const errText = await res.text();
+                showFeedback('form-feedback', 'Error: ' + errText, true);
+            }
+        } catch(err) {
+            showFeedback('form-feedback', 'Network error: ' + err.message, true);
+        } finally {
+            btn.textContent = 'Submit Asset'; btn.disabled = false;
+        }
+    }
+
+    // ================================================================
+    // VIEW HISTORY (User)
+    // ================================================================
+    async function viewUserHistory(requestId) {
+        try {
+            const res = await fetch(`${API_BASE}/requests/${requestId}/history`, { headers: authHeaders() });
+            if (!res.ok) { alert('Unable to load history'); return; }
+            const data = await res.json();
+            populateHistoryModal(data.request, data.auditLog, data.reviewActions);
+            openModal('history-modal');
+        } catch(e) { alert('Error loading history'); }
+    }
+
+    function populateHistoryModal(req, auditLog, reviewActions) {
+        const grid = document.getElementById('history-detail-grid');
+        grid.innerHTML = `
+            <div class="detail-item"><label>Title</label><div class="detail-value">${escapeHtml(req.title)}</div></div>
+            <div class="detail-item"><label>Status</label><div class="detail-value"><span class="status-badge status-${escapeHtml(req.status)}">${escapeHtml(req.status)}</span></div></div>
+            <div class="detail-item"><label>File</label><div class="detail-value mono">${escapeHtml(req.originalFileName || req.fileUrl)}</div></div>
+            <div class="detail-item"><label>Submitted</label><div class="detail-value">${formatDate(req.createdAt)}</div></div>
+            ${req.latestComment ? `<div class="detail-item" style="grid-column:span 2;">
+                <label>Latest Feedback</label>
+                <div class="feedback-box"><div class="feedback-box-text">${escapeHtml(req.latestComment)}</div></div>
+            </div>` : ''}
+        `;
+        renderTimeline('history-timeline', req, auditLog);
+    }
+
+    function renderTimeline(containerId, req, auditLog) {
+        const container = document.getElementById(containerId);
+        if (!auditLog || !auditLog.length) {
+            container.innerHTML = '<div style="color:var(--text-secondary);font-size:13px;">No history yet.</div>';
+            return;
+        }
+        container.innerHTML = auditLog.map(entry => {
+            const eventUpper = (entry.event || '').toUpperCase();
+            let dotClass = 'dot-SUBMITTED';
+            if (eventUpper.includes('APPROVED')) dotClass = 'dot-APPROVED';
+            else if (eventUpper.includes('REJECTED')) dotClass = 'dot-REJECTED';
+            else if (eventUpper.includes('CHANGES_REQUESTED')) dotClass = 'dot-CHANGES_REQUESTED';
+            else if (eventUpper.includes('RESUBMIT')) dotClass = 'dot-RESUBMITTED';
+
+            const parts = entry.event ? entry.event.split(' - ') : [entry.event];
+            const label = parts[0] || entry.event;
+            const comment = parts[1] || '';
+
+            return `<div class="timeline-item">
+                <div class="timeline-dot ${dotClass}"></div>
+                <div class="timeline-date">${formatDate(entry.timestamp)}</div>
+                <div class="timeline-label">${escapeHtml(label)} <span style="color:var(--text-secondary);font-weight:400;">by ${escapeHtml(entry.userId)}</span></div>
+                ${comment ? `<div class="timeline-comment">"${escapeHtml(comment)}"</div>` : ''}
+            </div>`;
+        }).join('');
+    }
+
+    // ================================================================
+    // RESUBMIT MODAL
+    // ================================================================
+    function openResubmitModal(requestId, lastComment) {
+        document.getElementById('resubmit-request-id').value = requestId;
+        document.getElementById('resubmit-file').value = '';
+        document.getElementById('resubmit-description').value = '';
+        hideFeedback('resubmit-feedback');
+        const commentBox = document.getElementById('resubmit-admin-comment');
+        if (lastComment) {
+            commentBox.innerHTML = `<div class="feedback-box-label">Admin Feedback (requested changes)</div><div class="feedback-box-text">${escapeHtml(lastComment)}</div>`;
+            commentBox.style.display = 'block';
+        } else {
+            commentBox.style.display = 'none';
+        }
+        openModal('resubmit-modal');
+    }
+
+    async function submitResubmit() {
+        const requestId = document.getElementById('resubmit-request-id').value;
+        const fileInput = document.getElementById('resubmit-file');
+        const file = fileInput.files ? fileInput.files[0] : null;
+        const description = document.getElementById('resubmit-description').value;
+
+        if (!file) { showFeedback('resubmit-feedback', 'Please select a revised file', true); return; }
+
+        const ext = (file.name || '').split('.').pop().toLowerCase();
+        if (!['jpg','jpeg','png','pdf','docx'].includes(ext)) {
+            showFeedback('resubmit-feedback', 'Unsupported file type', true); return;
+        }
+        if (file.size > 10 * 1024 * 1024) {
+            showFeedback('resubmit-feedback', 'File size exceeds 10MB limit', true); return;
+        }
+
+        const formData = new FormData();
+        formData.append('file', file);
+        if (description) formData.append('description', description);
+
+        try {
+            const res = await fetch(`${API_BASE}/requests/${requestId}/resubmit`, {
+                method: 'POST',
+                headers: authHeaders(),
+                body: formData
+            });
+            if (res.ok) {
+                closeModal('resubmit-modal');
+                loadUserDashboard();
+                loadNotifications();
+            } else {
+                const err = await res.text();
+                showFeedback('resubmit-feedback', 'Error: ' + err, true);
+            }
+        } catch(err) {
+            showFeedback('resubmit-feedback', 'Network error: ' + err.message, true);
+        }
+    }
+
+    // ================================================================
+    // ADMIN DASHBOARD
+    // ================================================================
+    async function loadAdminDashboard() {
+        if (!authToken) return;
+        try {
+            const res = await fetch(`${API_BASE}/requests/all`, { headers: authHeaders() });
+            if (res.status === 401 || res.status === 403) { handleLogout(); return; }
+            const requests = await res.json();
+            allAdminRequests = Array.isArray(requests) ? requests : [];
+            updateAdminStats(allAdminRequests);
+            renderAdminTable(filterAdminRequests(allAdminRequests));
+        } catch(e) { console.error('Failed to load admin requests', e); }
+        loadNotifications();
+    }
+
+    function updateAdminStats(requests) {
+        const counts = { PENDING:0, APPROVED:0, REJECTED:0, CHANGES_REQUESTED:0 };
+        requests.forEach(r => { if (counts[r.status] !== undefined) counts[r.status]++; });
+        document.getElementById('stat-pending').textContent = counts.PENDING;
+        document.getElementById('stat-approved').textContent = counts.APPROVED;
+        document.getElementById('stat-rejected').textContent = counts.REJECTED;
+        document.getElementById('stat-changes').textContent = counts.CHANGES_REQUESTED;
+    }
+
+    function setAdminFilter(filter, btn) {
+        adminFilter = filter;
+        document.querySelectorAll('#admin-filter-bar .filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderAdminTable(filterAdminRequests(allAdminRequests));
+    }
+
+    function filterAdminRequests(requests) {
+        if (adminFilter === 'ALL') return requests;
+        return requests.filter(r => r.status === adminFilter);
+    }
+
+    function renderAdminTable(requests) {
+        const tbody = document.getElementById('admin-requests-tbody');
+        if (!requests.length) {
+            tbody.innerHTML = '<tr class="empty-row"><td colspan="6">No requests found.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = requests.map(req => {
+            const isFinalized = req.status === 'APPROVED' || req.status === 'REJECTED';
+            return `<tr data-request-id="${escapeHtml(req.id)}">
+                <td><strong>${escapeHtml(req.title)}</strong>
+                    ${req.resubmissionCount > 0 ? `<span style="font-size:10px;color:var(--purple);margin-left:6px;">v${req.resubmissionCount+1}</span>` : ''}
+                </td>
+                <td><span class="mono" style="font-size:12px;color:var(--text-secondary);">${escapeHtml(req.originalFileName || req.fileUrl)}</span></td>
+                <td>${escapeHtml(req.requesterId)}</td>
+                <td style="font-size:12px;color:var(--text-secondary);">${formatDate(req.createdAt)}</td>
+                <td><span class="status-badge status-${escapeHtml(req.status)}" id="status-${escapeHtml(req.id)}">${escapeHtml(req.status)}</span></td>
+                <td>
+                    <div class="action-group">
+                        <button class="btn-sm btn-outline" onclick="openAdminReviewModal('${escapeHtml(req.id)}')">Open</button>
+                        ${!isFinalized ? `<button class="btn-sm btn-approve" onclick="quickReview('${escapeHtml(req.id)}', 'APPROVED')">Approve</button>
+                        <button class="btn-sm btn-reject" onclick="quickReview('${escapeHtml(req.id)}', 'REJECTED')">Reject</button>
+                        <button class="btn-sm btn-change" onclick="quickReview('${escapeHtml(req.id)}', 'CHANGES_REQUESTED')">Changes</button>` : ''}
+                    </div>
+                </td>
+            </tr>`;
+        }).join('');
+    }
+
+    function quickReview(requestId, action) {
+        openAdminReviewModal(requestId, action);
+    }
+
+    // ================================================================
+    // ADMIN REVIEW MODAL
+    // ================================================================
+    async function openAdminReviewModal(requestId, presetAction) {
+        document.getElementById('modal-request-id').value = requestId;
+        document.getElementById('modal-action').value = presetAction || '';
+        document.getElementById('reviewComment').value = '';
+        hideFeedback('modal-feedback');
+
+        // Load full history
+        try {
+            const res = await fetch(`${API_BASE}/requests/${requestId}/history`, { headers: authHeaders() });
+            if (!res.ok) { alert('Unable to load request details'); return; }
+            const data = await res.json();
+            const req = data.request;
+
+            document.getElementById('modal-title').textContent = 'Review: ' + req.title;
+
+            // File URL
+            const fileUrl = `${API_BASE}/requests/files/${encodeURIComponent(req.storedFileName || req.fileUrl || '')}`;
+            const ext = ((req.originalFileName || req.fileUrl || '')).split('.').pop().toLowerCase();
+
+            // Detail grid
+            const detailGrid = document.getElementById('modal-detail-grid');
+            detailGrid.innerHTML = `
+                <div class="detail-item"><label>Title</label><div class="detail-value">${escapeHtml(req.title)}</div></div>
+                <div class="detail-item"><label>Requester</label><div class="detail-value">${escapeHtml(req.requesterId)}</div></div>
+                <div class="detail-item"><label>Original Filename</label><div class="detail-value mono">${escapeHtml(req.originalFileName || req.fileUrl)}</div></div>
+                <div class="detail-item"><label>File Size</label><div class="detail-value">${formatBytes(req.fileSize)}</div></div>
+                <div class="detail-item"><label>Submitted</label><div class="detail-value">${formatDate(req.createdAt)}</div></div>
+                <div class="detail-item"><label>Status</label><div class="detail-value"><span class="status-badge status-${escapeHtml(req.status)}">${escapeHtml(req.status)}</span></div></div>
+                ${req.description ? `<div class="detail-item" style="grid-column:span 2;"><label>Description</label><div class="detail-value" style="font-size:13px;color:var(--text-secondary);">${escapeHtml(req.description)}</div></div>` : ''}
+            `;
+
+            // File preview
+            const previewArea = document.getElementById('modal-file-preview');
+            if (['jpg','jpeg','png'].includes(ext)) {
+                previewArea.innerHTML = `<img src="${fileUrl}" alt="Asset preview" onerror="this.parentElement.innerHTML='<span style=color:var(--text-secondary);font-size:12px;>Preview not available</span>'" style="max-width:100%;max-height:250px;border-radius:8px;border:1px solid var(--border-color);">`;
+            } else if (ext === 'pdf') {
+                previewArea.innerHTML = `<iframe src="${fileUrl}" class="pdf-preview-frame" title="PDF preview"></iframe>`;
+            } else {
+                previewArea.innerHTML = `<span style="font-size:12px;color:var(--text-secondary);">Preview not available for ${ext.toUpperCase()} files. Use download link below.</span>`;
+            }
+
+            // Download link
+            const dlLink = document.getElementById('modal-download-link');
+            dlLink.href = fileUrl;
+            dlLink.download = req.originalFileName || req.fileUrl || 'asset';
+
+            // Timeline
+            renderTimeline('modal-timeline', req, data.auditLog);
+
+            // Review buttons
+            const isFinalized = req.status === 'APPROVED' || req.status === 'REJECTED';
+            const reviewSection = document.getElementById('modal-review-form-section');
+            document.getElementById('modal-btn-approve').disabled = isFinalized;
+            document.getElementById('modal-btn-reject').disabled = isFinalized;
+            document.getElementById('modal-btn-change').disabled = isFinalized;
+
+            openModal('review-modal');
+        } catch(e) {
+            alert('Error loading request: ' + e.message);
+        }
+    }
+
+    async function submitReviewAction(action) {
+        if (!action) {
+            // Called from confirm-review-btn (Selenium compat): use modal-action value
+            action = document.getElementById('modal-action').value;
+        }
+        const requestId = document.getElementById('modal-request-id').value;
+        const comment = document.getElementById('reviewComment').value || 'Decision recorded.';
+
+        hideFeedback('modal-feedback');
+
+        const params = new URLSearchParams();
+        params.append('reviewerId', currentUser ? currentUser.username : 'admin');
+        params.append('action', action);
+        params.append('comment', comment);
+
+        try {
+            const res = await fetch(`${API_BASE}/requests/${requestId}/review?${params}`, {
+                method: 'PUT',
+                headers: authHeaders()
+            });
+            if (res.ok) {
+                closeModal('review-modal');
+                loadAdminDashboard();
+                loadNotifications();
+            } else {
+                const err = await res.text();
+                showFeedback('modal-feedback', err, true);
+            }
+        } catch(err) {
+            showFeedback('modal-feedback', err.message, true);
+        }
+    }
+
+    // ================================================================
+    // SELENIUM BACKWARD-COMPAT FUNCTIONS
+    // These delegate to the new implementations
+    // ================================================================
+    function openReviewModal(requestId, action) {
+        document.getElementById('modal-request-id').value = requestId;
+        document.getElementById('modal-action').value = action;
+        // Simplified open for Selenium tests that click btn-approve / btn-reject / btn-change
+        document.getElementById('modal-title').textContent = 'Action: ' + action.replace('_', ' ');
+        document.getElementById('reviewComment').value = '';
+        hideFeedback('modal-feedback');
+        // minimal open
+        document.getElementById('modal-detail-grid').innerHTML = '';
+        document.getElementById('modal-file-preview').innerHTML = '';
+        document.getElementById('modal-timeline').innerHTML = '';
+        openModal('review-modal');
+    }
+
+    // ================================================================
+    // BOOTSTRAP
+    // ================================================================
+    window.addEventListener('DOMContentLoaded', () => {
+        checkHealth();
+        setInterval(checkHealth, 30000);
+    });
+</script>
 </body>
 </html>
