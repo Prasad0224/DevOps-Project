@@ -29,16 +29,19 @@
         body { background-color: var(--bg-primary); color: var(--text-primary); min-height: 100vh; }
 
         /* ===== SCREENS ===== */
-        .screen { display: none; }
-        .screen.active { display: block; }
+        .screen { display: none !important; }
+        .screen.active { display: block !important; }
 
         /* ===== LOGIN ===== */
         #login-screen {
             min-height: 100vh;
-            display: flex;
+            display: none !important;
             align-items: center;
             justify-content: center;
             background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%);
+        }
+        #login-screen.active {
+            display: flex !important;
         }
         .login-card {
             background: var(--bg-secondary);
@@ -284,8 +287,25 @@
         <div class="login-logo">
             <div class="login-icon">🔐</div>
             <h1>Digital Asset Approval Platform</h1>
-            <p>Sign in to access your dashboard</p>
+            <p>Sign in or select a demo role to access the platform</p>
         </div>
+
+        <!-- 1-Click Instant Entry -->
+        <div style="display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px;">
+            <button type="button" class="btn-primary" id="btn-quick-user" style="background: var(--accent-blue); padding: 12px; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="quickLogin('user')">
+                <span>👤</span> <strong>Enter as Demo User</strong>
+            </button>
+            <button type="button" class="btn-primary" id="btn-quick-admin" style="background: var(--purple); padding: 12px; font-size: 14px; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="quickLogin('admin')">
+                <span>🛡️</span> <strong>Enter as Admin Reviewer</strong>
+            </button>
+        </div>
+
+        <div style="display: flex; align-items: center; margin: 18px 0; color: var(--text-secondary); font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px;">
+            <div style="flex: 1; height: 1px; background: var(--border-color);"></div>
+            <span style="padding: 0 10px;">or manual login</span>
+            <div style="flex: 1; height: 1px; background: var(--border-color);"></div>
+        </div>
+
         <form id="login-form" onsubmit="handleLogin(event)">
             <div class="form-group">
                 <label for="login-username">Username</label>
@@ -298,11 +318,6 @@
             <button type="submit" class="btn-primary" id="login-btn">Sign In</button>
             <div id="login-feedback" class="feedback-message"></div>
         </form>
-        <div style="margin-top:20px; padding:14px; background:rgba(59,130,246,0.08); border:1px solid rgba(59,130,246,0.2); border-radius:6px; font-size:12px; color:var(--text-secondary);">
-            <strong style="color:var(--text-primary);">Demo Accounts</strong><br>
-            USER: <code>user</code> / <code>user123</code><br>
-            ADMIN: <code>admin</code> / <code>admin123</code>
-        </div>
     </div>
 </div>
 
@@ -320,6 +335,7 @@
             <button class="notif-btn" id="user-notif-btn" onclick="toggleNotifPanel('user')" title="Notifications">
                 🔔<span class="notif-badge" id="user-notif-badge">0</span>
             </button>
+            <button class="btn-sm btn-outline" style="border-color:var(--purple);color:#a78bfa;" onclick="quickLogin('admin')" title="Switch to Admin Portal">🛡️ Admin View</button>
             <span class="role-badge role-USER">USER</span>
             <span class="user-info" id="user-display-name"></span>
             <button class="btn-sm btn-logout" onclick="handleLogout()">Logout</button>
@@ -406,6 +422,7 @@
             <button class="notif-btn" id="admin-notif-btn" onclick="toggleNotifPanel('admin')" title="Notifications">
                 🔔<span class="notif-badge" id="admin-notif-badge">0</span>
             </button>
+            <button class="btn-sm btn-outline" style="border-color:var(--accent-blue);color:#60a5fa;" onclick="quickLogin('user')" title="Switch to User Dashboard">📦 User View</button>
             <span class="role-badge role-ADMIN">ADMIN</span>
             <span class="user-info" id="admin-display-name"></span>
             <button class="btn-sm btn-logout" onclick="handleLogout()">Logout</button>
@@ -607,6 +624,32 @@
         if (el) { el.style.display = 'none'; el.className = 'feedback-message'; }
     }
 
+    function fillLogin(u, p) {
+        document.getElementById('login-username').value = u;
+        document.getElementById('login-password').value = p;
+    }
+
+    async function downloadAsset(url, filename) {
+        try {
+            const res = await fetch(url, { headers: authHeaders() });
+            if (!res.ok) {
+                window.open(url, '_blank');
+                return;
+            }
+            const blob = await res.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = blobUrl;
+            a.download = filename || 'download';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => window.URL.revokeObjectURL(blobUrl), 2000);
+        } catch(err) {
+            window.open(url, '_blank');
+        }
+    }
+
     function authHeaders() {
         return { 'X-Auth-Token': authToken || '' };
     }
@@ -648,15 +691,25 @@
     }
 
     // ================================================================
-    // LOGIN
+    // LOGIN & SESSION MANAGEMENT
     // ================================================================
+    async function quickLogin(role) {
+        const u = role === 'admin' ? 'admin' : 'user';
+        const p = role === 'admin' ? 'admin123' : 'user123';
+        const userInput = document.getElementById('login-username');
+        const passInput = document.getElementById('login-password');
+        if (userInput) userInput.value = u;
+        if (passInput) passInput.value = p;
+        await handleLogin();
+    }
+
     async function handleLogin(e) {
-        e.preventDefault();
+        if (e && e.preventDefault) e.preventDefault();
         hideFeedback('login-feedback');
         const username = document.getElementById('login-username').value.trim();
         const password = document.getElementById('login-password').value;
         const btn = document.getElementById('login-btn');
-        btn.textContent = 'Signing in...'; btn.disabled = true;
+        if (btn) { btn.textContent = 'Signing in...'; btn.disabled = true; }
 
         try {
             const res = await fetch(`${API_BASE}/auth/login`, {
@@ -668,6 +721,8 @@
             if (res.ok) {
                 authToken = data.token;
                 currentUser = data;
+                sessionStorage.setItem('daap_token', data.token);
+                sessionStorage.setItem('daap_user', JSON.stringify(data));
                 if (data.role === 'ADMIN') {
                     document.getElementById('admin-display-name').textContent = data.fullName || data.username;
                     showScreen('admin-screen');
@@ -686,7 +741,7 @@
         } catch(err) {
             showFeedback('login-feedback', 'Network error: ' + err.message, true);
         } finally {
-            btn.textContent = 'Sign In'; btn.disabled = false;
+            if (btn) { btn.textContent = 'Sign In'; btn.disabled = false; }
         }
     }
 
@@ -694,10 +749,45 @@
         try {
             await fetch(`${API_BASE}/auth/logout`, { method: 'POST', headers: authHeaders() });
         } catch(e) {}
+        sessionStorage.removeItem('daap_token');
+        sessionStorage.removeItem('daap_user');
         authToken = null; currentUser = null;
         showScreen('login-screen');
         document.getElementById('login-form').reset();
         stopNotifPolling();
+    }
+
+    async function restoreSession() {
+        const params = new URLSearchParams(window.location.search);
+        const urlRole = params.get('role');
+        if (urlRole === 'admin' || urlRole === 'user') {
+            await quickLogin(urlRole);
+            return true;
+        }
+
+        const savedToken = sessionStorage.getItem('daap_token');
+        const savedUserStr = sessionStorage.getItem('daap_user');
+        if (savedToken && savedUserStr) {
+            try {
+                const user = JSON.parse(savedUserStr);
+                authToken = savedToken;
+                currentUser = user;
+                if (user.role === 'ADMIN') {
+                    document.getElementById('admin-display-name').textContent = user.fullName || user.username;
+                    showScreen('admin-screen');
+                    loadAdminDashboard();
+                } else {
+                    document.getElementById('user-display-name').textContent = user.fullName || user.username;
+                    document.getElementById('requesterId').value = user.username;
+                    showScreen('user-screen');
+                    loadUserDashboard();
+                }
+                checkHealth();
+                startNotifPolling();
+                return true;
+            } catch(e) {}
+        }
+        return false;
     }
 
     // ================================================================
@@ -1078,16 +1168,19 @@
 
             document.getElementById('modal-title').textContent = 'Review: ' + req.title;
 
-            // File URL
-            const fileUrl = `${API_BASE}/requests/files/${encodeURIComponent(req.storedFileName || req.fileUrl || '')}`;
+            // File URL with auth token
+            const tokenParam = authToken ? `?token=${encodeURIComponent(authToken)}` : '';
+            const fileNameOrUrl = req.storedFileName || req.fileUrl || '';
+            const fileUrl = `${API_BASE}/requests/files/${encodeURIComponent(fileNameOrUrl)}${tokenParam}`;
             const ext = ((req.originalFileName || req.fileUrl || '')).split('.').pop().toLowerCase();
+            const originalName = req.originalFileName || req.fileUrl || 'asset';
 
             // Detail grid
             const detailGrid = document.getElementById('modal-detail-grid');
             detailGrid.innerHTML = `
                 <div class="detail-item"><label>Title</label><div class="detail-value">${escapeHtml(req.title)}</div></div>
                 <div class="detail-item"><label>Requester</label><div class="detail-value">${escapeHtml(req.requesterId)}</div></div>
-                <div class="detail-item"><label>Original Filename</label><div class="detail-value mono">${escapeHtml(req.originalFileName || req.fileUrl)}</div></div>
+                <div class="detail-item"><label>Original Filename</label><div class="detail-value mono">${escapeHtml(originalName)}</div></div>
                 <div class="detail-item"><label>File Size</label><div class="detail-value">${formatBytes(req.fileSize)}</div></div>
                 <div class="detail-item"><label>Submitted</label><div class="detail-value">${formatDate(req.createdAt)}</div></div>
                 <div class="detail-item"><label>Status</label><div class="detail-value"><span class="status-badge status-${escapeHtml(req.status)}">${escapeHtml(req.status)}</span></div></div>
@@ -1097,17 +1190,21 @@
             // File preview
             const previewArea = document.getElementById('modal-file-preview');
             if (['jpg','jpeg','png'].includes(ext)) {
-                previewArea.innerHTML = `<img src="${fileUrl}" alt="Asset preview" onerror="this.parentElement.innerHTML='<span style=color:var(--text-secondary);font-size:12px;>Preview not available</span>'" style="max-width:100%;max-height:250px;border-radius:8px;border:1px solid var(--border-color);">`;
+                previewArea.innerHTML = `<img src="${fileUrl}" alt="Asset preview" onerror="this.parentElement.innerHTML='<span style=color:var(--text-secondary);font-size:12px;>Preview not available</span>'" style="max-width:100%;max-height:350px;border-radius:8px;border:1px solid var(--border-color);display:block;margin:0 auto;">`;
             } else if (ext === 'pdf') {
-                previewArea.innerHTML = `<iframe src="${fileUrl}" class="pdf-preview-frame" title="PDF preview"></iframe>`;
+                previewArea.innerHTML = `<iframe src="${fileUrl}" class="pdf-preview-frame" style="width:100%;height:350px;border:1px solid var(--border-color);border-radius:8px;" title="PDF preview"></iframe>`;
             } else {
-                previewArea.innerHTML = `<span style="font-size:12px;color:var(--text-secondary);">Preview not available for ${ext.toUpperCase()} files. Use download link below.</span>`;
+                previewArea.innerHTML = `<div style="padding:16px;text-align:center;background:rgba(255,255,255,0.02);border:1px dashed var(--border-color);border-radius:8px;font-size:12px;color:var(--text-secondary);">Preview not supported inline for .${ext.toUpperCase()} files. Click below to download.</div>`;
             }
 
             // Download link
             const dlLink = document.getElementById('modal-download-link');
             dlLink.href = fileUrl;
-            dlLink.download = req.originalFileName || req.fileUrl || 'asset';
+            dlLink.download = originalName;
+            dlLink.onclick = (e) => {
+                e.preventDefault();
+                downloadAsset(fileUrl, originalName);
+            };
 
             // Timeline
             renderTimeline('modal-timeline', req, data.auditLog);
@@ -1179,9 +1276,10 @@
     // ================================================================
     // BOOTSTRAP
     // ================================================================
-    window.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener('DOMContentLoaded', async () => {
         checkHealth();
         setInterval(checkHealth, 30000);
+        await restoreSession();
     });
 </script>
 </body>

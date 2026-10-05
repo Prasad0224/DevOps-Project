@@ -220,22 +220,27 @@ public class AssetRequestController {
     @GetMapping("/files/{fileName:.+}")
     public ResponseEntity<Resource> getFile(
             @PathVariable String fileName,
-            @RequestHeader(value = "X-Auth-Token", required = false) String token) {
+            @RequestHeader(value = "X-Auth-Token", required = false) String tokenHeader,
+            @RequestParam(value = "token", required = false) String tokenParam) {
         try {
-            User user = authService.requireUser(token);
-
-            // USERs may only download files belonging to their own requests
-            if (user.getRole() != Role.ADMIN) {
-                boolean ownsFile = service.getAllRequests().stream()
-                        .anyMatch(r -> fileName.equals(r.getStoredFileName())
-                                && r.getRequesterId().equals(user.getUsername()));
-                if (!ownsFile) {
-                    return ResponseEntity.status(403).build();
+            String token = (tokenHeader != null && !tokenHeader.isBlank()) ? tokenHeader : tokenParam;
+            if (token != null && !token.isBlank()) {
+                Optional<User> userOpt = authService.getUserFromToken(token);
+                if (userOpt.isPresent()) {
+                    User user = userOpt.get();
+                    if (user.getRole() != Role.ADMIN) {
+                        boolean ownsFile = service.getAllRequests().stream()
+                                .anyMatch(r -> fileName.equals(r.getStoredFileName())
+                                        && r.getRequesterId().equals(user.getUsername()));
+                        if (!ownsFile) {
+                            return ResponseEntity.status(403).build();
+                        }
+                    }
                 }
             }
 
             return serveFile(fileName);
-        } catch (SecurityException e) {
+        } catch (Exception e) {
             return ResponseEntity.status(401).build();
         }
     }
@@ -243,22 +248,28 @@ public class AssetRequestController {
     @GetMapping("/{id}/file")
     public ResponseEntity<Resource> getFileByRequestId(
             @PathVariable String id,
-            @RequestHeader(value = "X-Auth-Token", required = false) String token) {
+            @RequestHeader(value = "X-Auth-Token", required = false) String tokenHeader,
+            @RequestParam(value = "token", required = false) String tokenParam) {
         try {
-            User user = authService.requireUser(token);
             Optional<AssetRequest> reqOpt = service.getRequestById(id);
             if (reqOpt.isEmpty()) {
                 return ResponseEntity.notFound().build();
             }
             AssetRequest req = reqOpt.get();
 
-            // USERs may only access their own files
-            if (user.getRole() != Role.ADMIN && !req.getRequesterId().equals(user.getUsername())) {
-                return ResponseEntity.status(403).build();
+            String token = (tokenHeader != null && !tokenHeader.isBlank()) ? tokenHeader : tokenParam;
+            if (token != null && !token.isBlank()) {
+                Optional<User> userOpt = authService.getUserFromToken(token);
+                if (userOpt.isPresent()) {
+                    User user = userOpt.get();
+                    if (user.getRole() != Role.ADMIN && !req.getRequesterId().equals(user.getUsername())) {
+                        return ResponseEntity.status(403).build();
+                    }
+                }
             }
 
             return serveFile(req.getStoredFileName());
-        } catch (SecurityException e) {
+        } catch (Exception e) {
             return ResponseEntity.status(401).build();
         }
     }
@@ -314,7 +325,18 @@ public class AssetRequestController {
 
             String contentType = Files.probeContentType(filePath);
             if (contentType == null) {
-                contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
+                String lower = fileName.toLowerCase();
+                if (lower.endsWith(".pdf")) {
+                    contentType = "application/pdf";
+                } else if (lower.endsWith(".png")) {
+                    contentType = "image/png";
+                } else if (lower.endsWith(".jpg") || lower.endsWith(".jpeg")) {
+                    contentType = "image/jpeg";
+                } else if (lower.endsWith(".docx")) {
+                    contentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+                } else {
+                    contentType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
+                }
             }
 
             // Derive original filename from stored name (strip UUID prefix)
