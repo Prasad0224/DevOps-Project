@@ -35,7 +35,7 @@ This guide details common operational challenges encountered across the CI/CD an
 ## 5. Local Docker Registry Failures
 * **Symptom**: `docker push localhost:5000/...` fails with `connection refused` or `server gave HTTP response to HTTPS client`.
 * **Cause**: `daap-registry` container is stopped or listening on another port.
-* **Fix**: Verify registry status with `docker ps --filter "name=daap-registry"`. If stopped, restart with `docker start daap-registry` or recreate with `docker run -d --restart unless-stopped --name daap-registry -p 5000:5000 registry:2`. Docker considers `localhost` an insecure registry by default.
+* **Fix**: Verify registry status with `docker ps --filter "name=daap-registry"`. If stopped, restart with `docker start daap-registry daap-registry-ui` or recreate with `docker run -d --restart unless-stopped --name daap-registry --network daap-net registry:2` and `docker run -d --restart unless-stopped --name daap-registry-ui --network daap-net -p 5000:80 -e REGISTRY_TITLE="DAAP Local Docker Registry" -e REGISTRY_URL=http://localhost:5000 -e NGINX_PROXY_PASS_URL=http://daap-registry:5000 -e SINGLE_REGISTRY=true -e DELETE_IMAGES=true joxit/docker-registry-ui:latest`. Docker considers `localhost` an insecure registry by default.
 
 ---
 

@@ -23,7 +23,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-@TestMethodOrder(MethodOrderer.MethodName.class)
+@TestMethodOrder(MethodOrderer.OrderAnnotation.class)
 public class AssetApprovalSeleniumTest {
 
     private static WebDriver driver;
@@ -111,6 +111,16 @@ public class AssetApprovalSeleniumTest {
     // -----------------------------------------------------------------------
     private void loginAs(String username, String password) {
         driver.get(baseUrl);
+        try {
+            List<WebElement> userFields = driver.findElements(By.id("login-username"));
+            if (userFields.isEmpty() || !userFields.get(0).isDisplayed()) {
+                ((JavascriptExecutor) driver).executeScript(
+                        "sessionStorage.clear(); localStorage.clear(); if (typeof showScreen === 'function') showScreen('login-screen');"
+                );
+                driver.get(baseUrl);
+            }
+        } catch (Exception ignored) {}
+
         WebElement userField = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("login-username")));
         userField.clear();
         userField.sendKeys(username);
@@ -140,12 +150,26 @@ public class AssetApprovalSeleniumTest {
 
     private void logout() {
         try {
-            WebElement logoutBtn = wait.until(
-                    ExpectedConditions.elementToBeClickable(By.cssSelector(".btn-logout")));
-            logoutBtn.click();
+            List<WebElement> logoutBtns = driver.findElements(By.cssSelector(".screen.active .btn-logout, .btn-logout"));
+            WebElement targetBtn = null;
+            for (WebElement b : logoutBtns) {
+                if (b.isDisplayed()) {
+                    targetBtn = b;
+                    break;
+                }
+            }
+            if (targetBtn != null) {
+                targetBtn.click();
+            } else {
+                ((JavascriptExecutor) driver).executeScript("if (typeof handleLogout === 'function') handleLogout();");
+            }
             wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("login-username")));
         } catch (Exception e) {
-            // If logout fails, just navigate to base URL
+            try {
+                ((JavascriptExecutor) driver).executeScript(
+                        "sessionStorage.clear(); localStorage.clear(); if (typeof handleLogout === 'function') handleLogout();"
+                );
+            } catch (Exception ignored) {}
             driver.get(baseUrl);
             wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("login-username")));
         }
@@ -155,6 +179,7 @@ public class AssetApprovalSeleniumTest {
     // TEST 1: USER Login → Upload PNG → Submit → Verify PENDING
     // -----------------------------------------------------------------------
     @Test
+    @Order(1)
     void test1_UserLogin_SubmitPNG_VerifyPending() {
         loginAsUser();
         waitForUserDashboard();
@@ -194,6 +219,7 @@ public class AssetApprovalSeleniumTest {
     // TEST 2: ADMIN Login → Verify Request in Queue → Open → Check Details
     // -----------------------------------------------------------------------
     @Test
+    @Order(2)
     void test2_AdminLogin_SeesRequest_VerifyDetails() {
         assertNotNull(sharedSubmittedTitle, "test1 must run first to produce sharedSubmittedTitle");
 
@@ -238,6 +264,7 @@ public class AssetApprovalSeleniumTest {
     // TEST 3: ADMIN → Open Request → Enter Comment → REQUEST CHANGES
     // -----------------------------------------------------------------------
     @Test
+    @Order(3)
     void test3_AdminReview_RequestChanges() {
         assertNotNull(sharedSubmittedTitle, "test1 must run first");
 
@@ -279,6 +306,7 @@ public class AssetApprovalSeleniumTest {
     // TEST 4: USER → See CHANGES_REQUESTED → See Feedback → Resubmit → PENDING
     // -----------------------------------------------------------------------
     @Test
+    @Order(4)
     void test4_UserSeesChanges_ResubmitsAsset() {
         assertNotNull(sharedSubmittedTitle, "test1 must run first");
 
@@ -329,6 +357,7 @@ public class AssetApprovalSeleniumTest {
     // TEST 5: ADMIN → Approve → APPROVED → User sees APPROVED
     // -----------------------------------------------------------------------
     @Test
+    @Order(5)
     void test5_AdminApproves_UserSeesApproval() {
         assertNotNull(sharedSubmittedTitle, "test1 must run first");
 
@@ -371,6 +400,7 @@ public class AssetApprovalSeleniumTest {
     // TEST 6: Invalid extension rejected
     // -----------------------------------------------------------------------
     @Test
+    @Order(6)
     void test6_InvalidExtension_Rejected() {
         loginAsUser();
         waitForUserDashboard();
@@ -391,6 +421,7 @@ public class AssetApprovalSeleniumTest {
     // TEST 7: Oversized file rejected
     // -----------------------------------------------------------------------
     @Test
+    @Order(7)
     void test7_OversizedFile_Rejected() {
         loginAsUser();
         waitForUserDashboard();
@@ -411,6 +442,7 @@ public class AssetApprovalSeleniumTest {
     // TEST 8: JPEG extension accepted
     // -----------------------------------------------------------------------
     @Test
+    @Order(8)
     void test8_JpegExtension_Accepted() {
         loginAsUser();
         waitForUserDashboard();
@@ -432,6 +464,7 @@ public class AssetApprovalSeleniumTest {
     // TEST 9: Duplicate filenames — separate requests created (not overwritten)
     // -----------------------------------------------------------------------
     @Test
+    @Order(9)
     void test9_DuplicateFilenames_BothStored() {
         loginAsUser();
         waitForUserDashboard();
@@ -460,6 +493,7 @@ public class AssetApprovalSeleniumTest {
     // TEST 10: Normal USER cannot access ADMIN review endpoint via UI
     // -----------------------------------------------------------------------
     @Test
+    @Order(10)
     void test10_UserCannotAccessAdminEndpoint() {
         loginAsUser();
         waitForUserDashboard();
@@ -480,6 +514,7 @@ public class AssetApprovalSeleniumTest {
     // TEST 11: Notifications visible to ADMIN when asset submitted
     // -----------------------------------------------------------------------
     @Test
+    @Order(11)
     void test11_AdminReceivesNotification() {
         // Submit as user
         loginAsUser();
@@ -514,6 +549,7 @@ public class AssetApprovalSeleniumTest {
     // TEST 12: Review history returned and visible
     // -----------------------------------------------------------------------
     @Test
+    @Order(12)
     void test12_ReviewHistoryVisible() {
         // Submit an asset as user
         loginAsUser();
@@ -559,6 +595,7 @@ public class AssetApprovalSeleniumTest {
     // Legacy Selenium compatibility: test IDs still work
     // -----------------------------------------------------------------------
     @Test
+    @Order(13)
     void test13_LegacyIds_StillPresent() {
         loginAsUser();
         waitForUserDashboard();

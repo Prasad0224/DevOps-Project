@@ -306,7 +306,7 @@
             <div style="flex: 1; height: 1px; background: var(--border-color);"></div>
         </div>
 
-        <form id="login-form" onsubmit="handleLogin(event)">
+        <form id="login-form" onsubmit="event.preventDefault(); handleLogin(event); return false;">
             <div class="form-group">
                 <label for="login-username">Username</label>
                 <input type="text" id="login-username" name="username" placeholder="user or admin" required autocomplete="username">
@@ -315,7 +315,7 @@
                 <label for="login-password">Password</label>
                 <input type="password" id="login-password" name="password" placeholder="••••••••" required autocomplete="current-password">
             </div>
-            <button type="submit" class="btn-primary" id="login-btn">Sign In</button>
+            <button type="submit" class="btn-primary" id="login-btn" onclick="handleLogin(event)">Sign In</button>
             <div id="login-feedback" class="feedback-message"></div>
         </form>
     </div>
@@ -338,7 +338,7 @@
             <button class="btn-sm btn-outline" style="border-color:var(--purple);color:#a78bfa;" onclick="quickLogin('admin')" title="Switch to Admin Portal">🛡️ Admin View</button>
             <span class="role-badge role-USER">USER</span>
             <span class="user-info" id="user-display-name"></span>
-            <button class="btn-sm btn-logout" onclick="handleLogout()">Logout</button>
+            <button class="btn-sm btn-logout" id="user-logout-btn" onclick="handleLogout()">Logout</button>
         </div>
     </header>
 
@@ -425,7 +425,7 @@
             <button class="btn-sm btn-outline" style="border-color:var(--accent-blue);color:#60a5fa;" onclick="quickLogin('user')" title="Switch to User Dashboard">📦 User View</button>
             <span class="role-badge role-ADMIN">ADMIN</span>
             <span class="user-info" id="admin-display-name"></span>
-            <button class="btn-sm btn-logout" onclick="handleLogout()">Logout</button>
+            <button class="btn-sm btn-logout" id="admin-logout-btn" onclick="handleLogout()">Logout</button>
         </div>
     </header>
 
@@ -745,16 +745,22 @@
         }
     }
 
-    async function handleLogout() {
-        try {
-            await fetch(`${API_BASE}/auth/logout`, { method: 'POST', headers: authHeaders() });
-        } catch(e) {}
+    function handleLogout() {
         sessionStorage.removeItem('daap_token');
         sessionStorage.removeItem('daap_user');
-        authToken = null; currentUser = null;
+        const tokenToRevoke = authToken;
+        authToken = null;
+        currentUser = null;
         showScreen('login-screen');
-        document.getElementById('login-form').reset();
+        const form = document.getElementById('login-form');
+        if (form) form.reset();
         stopNotifPolling();
+        if (tokenToRevoke) {
+            fetch(`${API_BASE}/auth/logout`, {
+                method: 'POST',
+                headers: { 'X-Auth-Token': tokenToRevoke }
+            }).catch(() => {});
+        }
     }
 
     async function restoreSession() {

@@ -171,7 +171,8 @@ mvn test -Pselenium -Dapp.baseUrl=http://localhost:8081/digital-asset-approval-p
 
 ### 1. Start Local Docker Registry
 ```bash
-docker run -d --restart unless-stopped --name daap-registry -p 5000:5000 registry:2
+docker run -d --restart unless-stopped --name daap-registry --network daap-net registry:2
+docker run -d --restart unless-stopped --name daap-registry-ui --network daap-net -p 5000:80 -e REGISTRY_TITLE="DAAP Local Docker Registry" -e REGISTRY_URL=http://localhost:5000 -e NGINX_PROXY_PASS_URL=http://daap-registry:5000 -e SINGLE_REGISTRY=true -e DELETE_IMAGES=true joxit/docker-registry-ui:latest
 ```
 
 ### 2. Build and Tag Docker Image

@@ -1,4 +1,4 @@
-﻿# Automated Digital Asset Approval Platform (DAAP) — DevOps Documentation
+# Automated Digital Asset Approval Platform (DAAP) — DevOps Documentation
 
 **Repository**: [https://github.com/Prasad0224/DevOps-Project.git](https://github.com/Prasad0224/DevOps-Project.git)
 **Branch**: `develop`
@@ -158,7 +158,8 @@ Automated browser regression is performed using Selenium WebDriver 4.16.1 in hea
 * **Registry Container**: Official `registry:2` container named `daap-registry` on port `5000`.
 * **Setup Command**:
   ```bash
-  docker run -d --restart unless-stopped --name daap-registry -p 5000:5000 registry:2
+  docker run -d --restart unless-stopped --name daap-registry --network daap-net registry:2
+  docker run -d --restart unless-stopped --name daap-registry-ui --network daap-net -p 5000:80 -e REGISTRY_TITLE="DAAP Local Docker Registry" -e REGISTRY_URL=http://localhost:5000 -e NGINX_PROXY_PASS_URL=http://daap-registry:5000 -e SINGLE_REGISTRY=true -e DELETE_IMAGES=true joxit/docker-registry-ui:latest
   ```
 * **Image Tags Pushed**:
   - `localhost:5000/digital-asset-approval-platform:1.0.${BUILD_NUMBER}`
